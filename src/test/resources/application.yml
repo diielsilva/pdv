@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/pdv_test?createDatabaseIfNotExist=true
+    username: diel
+    password: 12345
+  sql:
+    init:
+      mode: always
+security:
+  token:
+    secret: HXs0nlG0D+ctw233d2vg3WiT
+    expiration: 60000
