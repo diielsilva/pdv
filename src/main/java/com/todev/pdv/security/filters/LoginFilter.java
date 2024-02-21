@@ -5,8 +5,8 @@ import com.todev.pdv.common.dtos.ErrorResponse;
 import com.todev.pdv.core.models.User;
 import com.todev.pdv.security.dtos.LoginRequest;
 import com.todev.pdv.security.dtos.LoginResponse;
-import com.todev.pdv.security.utils.contracts.ResponseUtil;
 import com.todev.pdv.security.services.contracts.TokenService;
+import com.todev.pdv.security.utils.contracts.ResponseUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -36,14 +36,6 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
             var internalLogin = new UsernamePasswordAuthenticationToken(loginRequest.login(), loginRequest.password());
             return authManager.authenticate(internalLogin);
         } catch (IOException exception) {
-            var errorResponse = new ErrorResponse(
-                    LocalDateTime.now(),
-                    401,
-                    "Login ou senha inválido(a)!",
-                    request.getServletPath(),
-                    Set.of()
-            );
-            responseUtil.sendResponse(response, 401, errorResponse);
             return null;
         }
     }
@@ -59,4 +51,17 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         responseUtil.sendResponse(response, 200, loginResponse);
     }
 
+    @Override
+    protected void unsuccessfulAuthentication(HttpServletRequest request,
+                                              HttpServletResponse response,
+                                              AuthenticationException failed) {
+        var errorResponse = new ErrorResponse(
+                LocalDateTime.now(),
+                401,
+                "Login ou senha inválido(a)!",
+                request.getServletPath(),
+                Set.of()
+        );
+        responseUtil.sendResponse(response, 401, errorResponse);
+    }
 }
