@@ -152,7 +152,7 @@ public class ReportServiceImpl implements ReportService {
             var price = getCell();
 
             description.setPhrase(new Phrase(product.getDescription()));
-            amount.setPhrase(new Phrase(item.getAmount()));
+            amount.setPhrase(new Phrase(item.getAmount().toString()));
             price.setPhrase(new Phrase(String.format("R$ %.2f", item.getPrice())));
 
             saleItemsTable.addCell(description);
