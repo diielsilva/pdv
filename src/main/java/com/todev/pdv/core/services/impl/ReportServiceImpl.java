@@ -24,6 +24,7 @@ import static com.lowagie.text.Rectangle.NO_BORDER;
 @Service
 @RequiredArgsConstructor
 public class ReportServiceImpl implements ReportService {
+    private static final String SUBTOTAL_MESSAGE = "Sub-Total: R$ %.2f";
     private static final String TOTAL_MESSAGE = "Total: R$ %.2f";
     private final SaleProvider saleProvider;
     private final SaleItemProvider saleItemProvider;
@@ -36,6 +37,7 @@ public class ReportServiceImpl implements ReportService {
             var sale = saleProvider.findById(id);
             var items = saleItemProvider.findBySaleId(id);
             var total = 0.0;
+            var subtotal = sale.getTotal();
 
             pdf.open();
 
@@ -49,14 +51,16 @@ public class ReportServiceImpl implements ReportService {
 
             pdf.add(getSaleItemsTable(items));
 
-            if (sale.getDiscount() != 0) {
-                var percentDiscount = sale.getDiscount() / 10;
-                var discount = total * percentDiscount;
-                var subTotalParagraph = getParagraph(String.format("Sub-Total: R$ %.2f", total), 14);
+            if (sale.getDiscount() > 0) {
+                var percentDiscount = (double) sale.getDiscount() / 100;
+                var discount = subtotal * percentDiscount;
+                var subTotalParagraph = getParagraph(String.format(SUBTOTAL_MESSAGE, subtotal), 14);
                 var discountParagraph = getParagraph(String.format("Desconto: R$ %.2f", discount), 14);
                 pdf.add(subTotalParagraph);
                 pdf.add(discountParagraph);
-                total -= discount;
+                total = subtotal - discount;
+            } else {
+                total = subtotal;
             }
 
             var totalParagraph = getParagraph(String.format(TOTAL_MESSAGE, total), 14);
@@ -74,7 +78,7 @@ public class ReportServiceImpl implements ReportService {
             var start = date.withHour(0).withMinute(0).withSecond(0);
             var end = date.withHour(23).withMinute(59).withSecond(59);
             var sales = saleProvider.findActiveByDate(start, end);
-            var total = 0.0;
+            var totalOfSales = 0.0;
 
             pdf.open();
 
@@ -83,45 +87,51 @@ public class ReportServiceImpl implements ReportService {
             pdf.add(title);
 
             var salesTable = new PdfPTable(4);
-            var idTitle = getCell();
             var discountTitle = getCell();
+            var subTotalTitle = getCell();
             var totalTitle = getCell();
             var dateTitle = getCell();
 
-            idTitle.setPhrase(new Phrase("ID"));
-            discountTitle.setPhrase(new Phrase("DISC (%)"));
+            discountTitle.setPhrase(new Phrase("DESC (%)"));
+            subTotalTitle.setPhrase(new Phrase("SUB-TOTAL"));
             totalTitle.setPhrase(new Phrase("TOTAL"));
             dateTitle.setPhrase(new Phrase("DATA"));
 
-            salesTable.addCell(idTitle);
             salesTable.addCell(discountTitle);
+            salesTable.addCell(subTotalTitle);
             salesTable.addCell(totalTitle);
             salesTable.addCell(dateTitle);
 
             for (Sale sale : sales) {
-                var idCell = getCell();
                 var discountCell = getCell();
+                var subTotalCell = getCell();
                 var totalCell = getCell();
                 var dateCell = getCell();
+                var subtotal = sale.getTotal();
+                var total = sale.getTotal();
 
-                if (sale.getDiscount() != 0) {
-                    var percentDiscount = sale.getDiscount() / 100;
-                    var discount = sale.getTotal() * percentDiscount;
-                    var totalSale = sale.getTotal() - discount;
-                    total += totalSale;
-                } else {
-                    total += sale.getTotal();
+                if (sale.getDiscount() > 0) {
+                    var percentDiscount = (double) sale.getDiscount() / 100;
+                    var discount = subtotal * percentDiscount;
+                    total = sale.getTotal() - discount;
                 }
 
-                idCell.setPhrase(new Phrase(sale.getId()));
-                discountCell.setPhrase(new Phrase(sale.getDiscount()));
-                totalCell.setPhrase(new Phrase(String.format(TOTAL_MESSAGE, sale.getTotal())));
+                totalOfSales += total;
+
+                discountCell.setPhrase(new Phrase(sale.getDiscount().toString()));
+                subTotalCell.setPhrase(new Phrase(String.format("%.2f", subtotal)));
+                totalCell.setPhrase(new Phrase(String.format("%.2f", total)));
                 dateCell.setPhrase(new Phrase(String.format("%s", sale.getCreatedAt())));
+
+                salesTable.addCell(discountCell);
+                salesTable.addCell(subTotalCell);
+                salesTable.addCell(totalCell);
+                salesTable.addCell(dateCell);
             }
 
             pdf.add(salesTable);
 
-            var totalParagraph = getParagraph(String.format(TOTAL_MESSAGE, total), 14);
+            var totalParagraph = getParagraph(String.format(TOTAL_MESSAGE, totalOfSales), 14);
 
             pdf.add(totalParagraph);
 
@@ -136,7 +146,7 @@ public class ReportServiceImpl implements ReportService {
         var amountTitle = getCell();
         var priceTitle = getCell();
 
-        descriptionTitle.setPhrase(new Phrase("DESC"));
+        descriptionTitle.setPhrase(new Phrase("DESCRIÇÃO"));
         amountTitle.setPhrase(new Phrase("QTD"));
         priceTitle.setPhrase(new Phrase("PREÇO"));
 
