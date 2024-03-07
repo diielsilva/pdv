@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.lowagie.text.Element.ALIGN_CENTER;
+import static com.lowagie.text.Element.CELL;
 import static com.lowagie.text.Rectangle.NO_BORDER;
 
 @Service
@@ -41,9 +42,11 @@ public class ReportServiceImpl implements ReportService {
 
             pdf.open();
 
-            var pdfTitle = getParagraph("Loja Minha Make", 19);
+            var pdfTitle = getParagraph("Minha Make", 19);
+            var address = getParagraph("Rua Henrique de Holanda, Nº 3000", 16);
 
             pdf.add(pdfTitle);
+            pdf.add(address);
 
             for (SaleItem item : items) {
                 total += item.getAmount() * item.getPrice();
@@ -87,6 +90,8 @@ public class ReportServiceImpl implements ReportService {
             pdf.add(title);
 
             var salesTable = new PdfPTable(4);
+            salesTable.setSpacingBefore(10);
+            salesTable.setSpacingAfter(10);
             var discountTitle = getCell();
             var subTotalTitle = getCell();
             var totalTitle = getCell();
@@ -121,7 +126,7 @@ public class ReportServiceImpl implements ReportService {
                 discountCell.setPhrase(new Phrase(sale.getDiscount().toString()));
                 subTotalCell.setPhrase(new Phrase(String.format("%.2f", subtotal)));
                 totalCell.setPhrase(new Phrase(String.format("%.2f", total)));
-                dateCell.setPhrase(new Phrase(String.format("%s", sale.getCreatedAt())));
+                dateCell.setPhrase(new Phrase(String.format("%s", sale.getCreatedAt().toLocalDate())));
 
                 salesTable.addCell(discountCell);
                 salesTable.addCell(subTotalCell);
@@ -142,6 +147,8 @@ public class ReportServiceImpl implements ReportService {
 
     private PdfPTable getSaleItemsTable(List<SaleItem> items) {
         var saleItemsTable = new PdfPTable(3);
+        saleItemsTable.setSpacingBefore(10);
+        saleItemsTable.setSpacingAfter(10);
         var descriptionTitle = getCell();
         var amountTitle = getCell();
         var priceTitle = getCell();
@@ -184,7 +191,7 @@ public class ReportServiceImpl implements ReportService {
 
     private PdfPCell getCell() {
         var cell = new PdfPCell();
-        cell.setBorder(NO_BORDER);
+        cell.setBorder(1);
         return cell;
     }
 }
