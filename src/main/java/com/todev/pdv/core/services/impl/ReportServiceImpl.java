@@ -19,8 +19,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.lowagie.text.Element.ALIGN_CENTER;
-import static com.lowagie.text.Element.CELL;
-import static com.lowagie.text.Rectangle.NO_BORDER;
 
 @Service
 @RequiredArgsConstructor
@@ -43,10 +41,16 @@ public class ReportServiceImpl implements ReportService {
             pdf.open();
 
             var pdfTitle = getParagraph("Minha Make", 19);
-            var address = getParagraph("Rua Henrique de Holanda, Nº 3000", 16);
+            var shopping = getParagraph("Vitória Park Shopping", 15);
+            var address = getParagraph("Rua Henrique de Holanda - Nº 3000", 15);
+            var phone = getParagraph("(81) 99451-3987", 15);
+            var cnpj = getParagraph("CNPJ 35.699.902/0001-42", 15);
 
             pdf.add(pdfTitle);
+            pdf.add(shopping);
             pdf.add(address);
+            pdf.add(phone);
+            pdf.add(cnpj);
 
             for (SaleItem item : items) {
                 total += item.getAmount() * item.getPrice();
