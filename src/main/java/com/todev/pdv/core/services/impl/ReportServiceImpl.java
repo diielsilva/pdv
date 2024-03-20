@@ -6,7 +6,6 @@ import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import com.todev.pdv.core.exceptions.FileExportException;
 import com.todev.pdv.core.models.Sale;
-import com.todev.pdv.core.models.SaleItem;
 import com.todev.pdv.core.providers.contracts.ProductProvider;
 import com.todev.pdv.core.providers.contracts.SaleItemProvider;
 import com.todev.pdv.core.providers.contracts.SaleProvider;
@@ -16,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.lowagie.text.Element.ALIGN_CENTER;
@@ -23,55 +24,57 @@ import static com.lowagie.text.Element.ALIGN_CENTER;
 @Service
 @RequiredArgsConstructor
 public class ReportServiceImpl implements ReportService {
-    private static final String SUBTOTAL_MESSAGE = "Sub-Total: R$ %.2f";
-    private static final String TOTAL_MESSAGE = "Total: R$ %.2f";
     private final SaleProvider saleProvider;
     private final SaleItemProvider saleItemProvider;
     private final ProductProvider productProvider;
 
     @Override
     public void saleReport(Integer id, HttpServletResponse response) {
-        try (var pdf = new Document(PageSize.A4)) {
-            PdfWriter.getInstance(pdf, response.getOutputStream());
+        try (var report = new Document(PageSize.A4)) {
+            PdfWriter.getInstance(report, response.getOutputStream());
             var sale = saleProvider.findById(id);
             var items = saleItemProvider.findBySaleId(id);
-            var total = 0.0;
-            var subtotal = sale.getTotal();
 
-            pdf.open();
+            report.open();
 
-            var pdfTitle = getParagraph("Minha Make", 19);
-            var shopping = getParagraph("Vitória Park Shopping", 15);
-            var address = getParagraph("Rua Henrique de Holanda - Nº 3000", 15);
-            var phone = getParagraph("(81) 99451-3987", 15);
-            var cnpj = getParagraph("CNPJ 35.699.902/0001-42", 15);
+            var reportHeader = createReportHeader("Minha Make", List.of(
+                    "Vitória Park Shopping",
+                    "Rua Henrique de Holanda - Nº 3000",
+                    "(81) 99451-3987",
+                    "CNPJ 35.699.902/000010-42"
+            ));
 
-            pdf.add(pdfTitle);
-            pdf.add(shopping);
-            pdf.add(address);
-            pdf.add(phone);
-            pdf.add(cnpj);
+            reportHeader.forEach(report::add);
 
-            for (SaleItem item : items) {
-                total += item.getAmount() * item.getPrice();
-            }
+            var table = createTable(3, List.of("PROD", "QTD", "PREÇO"));
 
-            pdf.add(getSaleItemsTable(items));
+            items.forEach(item -> {
+                var product = productProvider.findById(item.getProductId());
 
-            if (sale.getDiscount() > 0) {
-                var percentDiscount = (double) sale.getDiscount() / 100;
-                var discount = subtotal * percentDiscount;
-                var subTotalParagraph = getParagraph(String.format(SUBTOTAL_MESSAGE, subtotal), 14);
-                var discountParagraph = getParagraph(String.format("Desconto: R$ %.2f", discount), 14);
-                pdf.add(subTotalParagraph);
-                pdf.add(discountParagraph);
-                total = subtotal - discount;
-            } else {
-                total = subtotal;
-            }
+                var tableCells = createTableCells(List.of(
+                        product.getDescription(),
+                        product.getAmount().toString(),
+                        String.format("R$ %.2f", product.getPrice())
+                ));
 
-            var totalParagraph = getParagraph(String.format(TOTAL_MESSAGE, total), 14);
-            pdf.add(totalParagraph);
+                tableCells.forEach(table::addCell);
+
+            });
+
+            report.add(table);
+            var discount = (double) sale.getDiscount() / 100 * sale.getTotal();
+
+            var reportFooter = createReportFooter(List.of(
+                    String.format("Subtotal: R$ %.2f", sale.getTotal()),
+                    String.format("Desconto: R$ %.2f", discount),
+                    String.format("Total: R$ %.2f", sale.getTotal() - discount)
+            ));
+
+            var lastItemOfFooter = reportFooter.get(reportFooter.size() - 1);
+            lastItemOfFooter.setSpacingAfter(10);
+
+            reportFooter.forEach(report::add);
+
 
         } catch (Exception exception) {
             throw new FileExportException("Não foi possível gerar o PDF da venda!");
@@ -80,112 +83,69 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public void salesReportByDate(LocalDateTime date, HttpServletResponse response) {
-        try (var pdf = new Document(PageSize.A4)) {
-            PdfWriter.getInstance(pdf, response.getOutputStream());
+        try (var report = new Document(PageSize.A4)) {
+            PdfWriter.getInstance(report, response.getOutputStream());
             var start = date.withHour(0).withMinute(0).withSecond(0);
             var end = date.withHour(23).withMinute(59).withSecond(59);
             var sales = saleProvider.findActiveByDate(start, end);
             var totalOfSales = 0.0;
 
-            pdf.open();
+            report.open();
 
-            var title = getParagraph("Relatório de Vendas", 19);
+            var reportHeader = createReportHeader("Relatório de Vendas", List.of());
 
-            pdf.add(title);
+            reportHeader.forEach(report::add);
 
-            var salesTable = new PdfPTable(4);
-            salesTable.setSpacingBefore(10);
-            salesTable.setSpacingAfter(10);
-            var discountTitle = getCell();
-            var subTotalTitle = getCell();
-            var totalTitle = getCell();
-            var dateTitle = getCell();
-
-            discountTitle.setPhrase(new Phrase("DESC (%)"));
-            subTotalTitle.setPhrase(new Phrase("SUB-TOTAL"));
-            totalTitle.setPhrase(new Phrase("TOTAL"));
-            dateTitle.setPhrase(new Phrase("DATA"));
-
-            salesTable.addCell(discountTitle);
-            salesTable.addCell(subTotalTitle);
-            salesTable.addCell(totalTitle);
-            salesTable.addCell(dateTitle);
+            var table = createTable(4, List.of("DESC(%)", "SUBTOTAL", "TOTAL", "DATA"));
 
             for (Sale sale : sales) {
-                var discountCell = getCell();
-                var subTotalCell = getCell();
-                var totalCell = getCell();
-                var dateCell = getCell();
-                var subtotal = sale.getTotal();
                 var total = sale.getTotal();
+                var discount = (double) sale.getDiscount() / 100 * sale.getTotal();
 
-                if (sale.getDiscount() > 0) {
-                    var percentDiscount = (double) sale.getDiscount() / 100;
-                    var discount = subtotal * percentDiscount;
-                    total = sale.getTotal() - discount;
-                }
+                total = sale.getTotal() - discount;
 
                 totalOfSales += total;
 
-                discountCell.setPhrase(new Phrase(sale.getDiscount().toString()));
-                subTotalCell.setPhrase(new Phrase(String.format("%.2f", subtotal)));
-                totalCell.setPhrase(new Phrase(String.format("%.2f", total)));
-                dateCell.setPhrase(new Phrase(String.format("%s", sale.getCreatedAt().toLocalDate())));
+                var tableCells = createTableCells(List.of(
+                        sale.getDiscount().toString(),
+                        String.format("R$ %.2f", sale.getTotal()),
+                        String.format("R$ %.2f", total),
+                        sale.getCreatedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                ));
 
-                salesTable.addCell(discountCell);
-                salesTable.addCell(subTotalCell);
-                salesTable.addCell(totalCell);
-                salesTable.addCell(dateCell);
+                tableCells.forEach(table::addCell);
             }
 
-            pdf.add(salesTable);
+            report.add(table);
 
-            var totalParagraph = getParagraph(String.format(TOTAL_MESSAGE, totalOfSales), 14);
+            var reportFooter = createReportFooter(List.of(String.format("Total: R$ %.2f", totalOfSales)));
+            var lastItemOfFooter = reportFooter.get(reportFooter.size() - 1);
 
-            pdf.add(totalParagraph);
+            lastItemOfFooter.setSpacingAfter(10);
+
+            reportFooter.forEach(report::add);
 
         } catch (Exception exception) {
             throw new FileExportException("Não foi possível gerar o PDF das vendas!");
         }
     }
 
-    private PdfPTable getSaleItemsTable(List<SaleItem> items) {
-        var saleItemsTable = new PdfPTable(3);
-        saleItemsTable.setSpacingBefore(10);
-        saleItemsTable.setSpacingAfter(10);
-        var descriptionTitle = getCell();
-        var amountTitle = getCell();
-        var priceTitle = getCell();
-
-        descriptionTitle.setPhrase(new Phrase("DESCRIÇÃO"));
-        amountTitle.setPhrase(new Phrase("QTD"));
-        priceTitle.setPhrase(new Phrase("PREÇO"));
-
-        saleItemsTable.addCell(descriptionTitle);
-        saleItemsTable.addCell(amountTitle);
-        saleItemsTable.addCell(priceTitle);
-
-
-        for (SaleItem item : items) {
-            var product = productProvider.findById(item.getProductId());
-            var description = getCell();
-            var amount = getCell();
-            var price = getCell();
-
-            description.setPhrase(new Phrase(product.getDescription()));
-            amount.setPhrase(new Phrase(item.getAmount().toString()));
-            price.setPhrase(new Phrase(String.format("R$ %.2f", item.getPrice())));
-
-            saleItemsTable.addCell(description);
-            saleItemsTable.addCell(amount);
-            saleItemsTable.addCell(price);
-
-        }
-
-        return saleItemsTable;
+    private List<Paragraph> createReportHeader(String titleContent, List<String> subtitles) {
+        List<Paragraph> paragraphs = new ArrayList<>();
+        var title = createParagraph(titleContent, 22);
+        title.getFont().setStyle("bold");
+        paragraphs.add(title);
+        subtitles.forEach(subtitle -> paragraphs.add(createParagraph(subtitle, 16)));
+        return paragraphs;
     }
 
-    private Paragraph getParagraph(String content, Integer fontSize) {
+    private List<Paragraph> createReportFooter(List<String> contents) {
+        List<Paragraph> paragraphs = new ArrayList<>();
+        contents.forEach(content -> paragraphs.add(createParagraph(content, 16)));
+        return paragraphs;
+    }
+
+    private Paragraph createParagraph(String content, Integer fontSize) {
         var fontStyle = FontFactory.getFont(FontFactory.defaultEncoding);
         fontStyle.setSize(fontSize);
         var paragraph = new Paragraph(content, fontStyle);
@@ -193,9 +153,30 @@ public class ReportServiceImpl implements ReportService {
         return paragraph;
     }
 
-    private PdfPCell getCell() {
-        var cell = new PdfPCell();
-        cell.setBorder(1);
-        return cell;
+    private PdfPTable createTable(int columns, List<String> headers) {
+        var table = new PdfPTable(columns);
+        table.setSpacingBefore(15);
+        table.setSpacingAfter(15);
+        headers.forEach(title -> {
+            var header = new PdfPCell();
+            header.setBorder(0);
+            header.setPadding(6);
+            header.setPhrase(new Phrase(title));
+            header.getPhrase().getFont().setStyle("bold");
+            table.addCell(header);
+        });
+        return table;
+    }
+
+    private List<PdfPCell> createTableCells(List<String> contents) {
+        List<PdfPCell> cells = new ArrayList<>();
+        contents.forEach(content -> {
+            var cell = new PdfPCell();
+            cell.setBorder(0);
+            cell.setPadding(6);
+            cell.setPhrase(new Phrase(content));
+            cells.add(cell);
+        });
+        return cells;
     }
 }
