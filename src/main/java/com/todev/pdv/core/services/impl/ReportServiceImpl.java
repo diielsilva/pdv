@@ -30,7 +30,7 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public void saleReport(Integer id, HttpServletResponse response) {
-        try (var report = new Document(PageSize.A4)) {
+        try (var report = new Document(PageSize.B6)) {
             PdfWriter.getInstance(report, response.getOutputStream());
             var sale = saleProvider.findById(id);
             var items = saleItemProvider.findBySaleId(id);
@@ -53,7 +53,7 @@ public class ReportServiceImpl implements ReportService {
 
                 var tableCells = createTableCells(List.of(
                         product.getDescription(),
-                        product.getAmount().toString(),
+                        item.getAmount().toString(),
                         String.format("R$ %.2f", product.getPrice())
                 ));
 
@@ -83,7 +83,7 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public void salesReportByDate(LocalDateTime date, HttpServletResponse response) {
-        try (var report = new Document(PageSize.A4)) {
+        try (var report = new Document(PageSize.B6)) {
             PdfWriter.getInstance(report, response.getOutputStream());
             var start = date.withHour(0).withMinute(0).withSecond(0);
             var end = date.withHour(23).withMinute(59).withSecond(59);
