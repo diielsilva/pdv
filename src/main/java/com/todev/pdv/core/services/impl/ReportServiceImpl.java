@@ -63,15 +63,22 @@ public class ReportServiceImpl implements ReportService {
 
             report.add(table);
             var discount = (double) sale.getDiscount() / 100 * sale.getTotal();
+            List<Paragraph> reportFooter;
 
-            var reportFooter = createReportFooter(List.of(
-                    String.format("Subtotal: R$ %.2f", sale.getTotal()),
-                    String.format("Desconto: R$ %.2f", discount),
-                    String.format("Total: R$ %.2f", sale.getTotal() - discount)
-            ));
+            if (discount > 0) {
+                reportFooter = createReportFooter(List.of(
+                        String.format("Subtotal: R$ %.2f", sale.getTotal()),
+                        String.format("Desconto: R$ %.2f", discount),
+                        String.format("Total: R$ %.2f", sale.getTotal() - discount)
+                ));
+            } else {
+                reportFooter = createReportFooter(List.of(
+                        String.format("Total: R$ %.2f", sale.getTotal())
+                ));
+            }
 
             var lastItemOfFooter = reportFooter.get(reportFooter.size() - 1);
-            lastItemOfFooter.setSpacingAfter(10);
+            lastItemOfFooter.setSpacingAfter(15);
 
             reportFooter.forEach(report::add);
 
@@ -121,7 +128,7 @@ public class ReportServiceImpl implements ReportService {
             var reportFooter = createReportFooter(List.of(String.format("Total: R$ %.2f", totalOfSales)));
             var lastItemOfFooter = reportFooter.get(reportFooter.size() - 1);
 
-            lastItemOfFooter.setSpacingAfter(10);
+            lastItemOfFooter.setSpacingAfter(15);
 
             reportFooter.forEach(report::add);
 
