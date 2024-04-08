@@ -8,4 +8,6 @@ public interface ReportService {
     void saleReport(Integer id, HttpServletResponse response);
 
     void salesReportByDate(LocalDateTime date, HttpServletResponse response);
+
+    void goodsReport(HttpServletResponse response);
 }

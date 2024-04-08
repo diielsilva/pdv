@@ -18,6 +18,7 @@ import com.todev.pdv.core.providers.contracts.UserProvider;
 import com.todev.pdv.core.services.contracts.ReportService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -141,6 +142,48 @@ public class ReportServiceImpl implements ReportService {
 
         } catch (Exception exception) {
             throw new FileExportException("Não foi possível gerar o PDF das vendas!");
+        }
+    }
+
+    @Override
+    public void goodsReport(HttpServletResponse response) {
+        try (var report = new Document(PageSize.B6)) {
+            PdfWriter.getInstance(report, response.getOutputStream());
+            var actualPage = 0;
+            var activeProducts = productProvider.findActive(PageRequest.of(actualPage, 20));
+            var totalPages = activeProducts.getTotalPages();
+
+            report.open();
+
+            var reportHeader = createReportHeader("Relatório do Estoque", List.of());
+
+            reportHeader.forEach(report::add);
+
+            var table = createTable(3, List.of("COD", "DESC", "QTD"));
+
+
+            while (actualPage < totalPages) {
+                activeProducts = productProvider.findActive(PageRequest.of(actualPage, 20));
+
+                activeProducts.getContent().forEach(product -> {
+
+                    var tableCells = createTableCells(List.of(
+                            product.getId().toString(),
+                            product.getDescription(),
+                            product.getAmount().toString()
+                    ));
+
+                    tableCells.forEach(table::addCell);
+
+                });
+
+                actualPage++;
+            }
+
+            report.add(table);
+
+        } catch (Exception exception) {
+            throw new FileExportException("Não foi possível gerar o relatório do estoque!");
         }
     }
 
