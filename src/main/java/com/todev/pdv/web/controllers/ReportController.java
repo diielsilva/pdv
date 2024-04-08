@@ -30,4 +30,13 @@ public class ReportController {
         response.setHeader(headerKey, headerValue);
         reportService.salesReportByDate(date, response);
     }
+
+    @GetMapping("goods")
+    public void goodsReport(HttpServletResponse response) {
+        var headerKey = "Content-Disposition";
+        var headerValue = "attachment; filename=report-" + LocalDateTime.now() + ".pdf";
+        response.setContentType("application/pdf");
+        response.setHeader(headerKey, headerValue);
+        reportService.goodsReport(response);
+    }
 }
