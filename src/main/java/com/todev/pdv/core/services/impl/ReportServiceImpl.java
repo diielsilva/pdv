@@ -1,6 +1,11 @@
 package com.todev.pdv.core.services.impl;
 
 import com.lowagie.text.*;
+import com.lowagie.text.Document;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.PageSize;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
@@ -9,6 +14,7 @@ import com.todev.pdv.core.models.Sale;
 import com.todev.pdv.core.providers.contracts.ProductProvider;
 import com.todev.pdv.core.providers.contracts.SaleItemProvider;
 import com.todev.pdv.core.providers.contracts.SaleProvider;
+import com.todev.pdv.core.providers.contracts.UserProvider;
 import com.todev.pdv.core.services.contracts.ReportService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +33,7 @@ public class ReportServiceImpl implements ReportService {
     private final SaleProvider saleProvider;
     private final SaleItemProvider saleItemProvider;
     private final ProductProvider productProvider;
+    private final UserProvider userProvider;
 
     @Override
     public void saleReport(Integer id, HttpServletResponse response) {
@@ -103,19 +110,19 @@ public class ReportServiceImpl implements ReportService {
 
             reportHeader.forEach(report::add);
 
-            var table = createTable(4, List.of("DESC(%)", "SUBTOTAL", "TOTAL", "DATA"));
+            var table = createTable(3, List.of("VEND", "TOTAL", "DATA"));
 
             for (Sale sale : sales) {
                 var total = sale.getTotal();
                 var discount = (double) sale.getDiscount() / 100 * sale.getTotal();
+                var user = userProvider.findById(sale.getUserId());
 
                 total = sale.getTotal() - discount;
 
                 totalOfSales += total;
 
                 var tableCells = createTableCells(List.of(
-                        sale.getDiscount().toString(),
-                        String.format("R$ %.2f", sale.getTotal()),
+                        user.getName(),
                         String.format("R$ %.2f", total),
                         sale.getCreatedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
                 ));
