@@ -9,6 +9,7 @@ import com.lowagie.text.Phrase;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
+import com.todev.pdv.core.enums.PaymentMethod;
 import com.todev.pdv.core.exceptions.FileExportException;
 import com.todev.pdv.core.models.Sale;
 import com.todev.pdv.core.providers.contracts.ProductProvider;
@@ -111,7 +112,7 @@ public class ReportServiceImpl implements ReportService {
 
             reportHeader.forEach(report::add);
 
-            var table = createTable(3, List.of("VEND", "TOTAL", "DATA"));
+            var table = createTable(4, List.of("VEND", "TOTAL", "PAG", "DATA"));
 
             for (Sale sale : sales) {
                 var total = sale.getTotal();
@@ -125,7 +126,8 @@ public class ReportServiceImpl implements ReportService {
                 var tableCells = createTableCells(List.of(
                         user.getName(),
                         String.format("R$ %.2f", total),
-                        sale.getCreatedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                        convertPaymentMethod(sale.getPaymentMethod()),
+                        sale.getCreatedAt().format(DateTimeFormatter.ofPattern("dd/MM/yy"))
                 ));
 
                 tableCells.forEach(table::addCell);
@@ -235,5 +237,13 @@ public class ReportServiceImpl implements ReportService {
             cells.add(cell);
         });
         return cells;
+    }
+
+    private String convertPaymentMethod(PaymentMethod paymentMethod) {
+        return switch (paymentMethod) {
+            case PIX -> "PIX";
+            case CARD -> "CARTÃO";
+            case CASH -> "DINHEIRO";
+        };
     }
 }
