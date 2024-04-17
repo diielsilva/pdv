@@ -63,7 +63,7 @@ public class ReportServiceImpl implements ReportService {
                 var tableCells = createTableCells(List.of(
                         product.getDescription(),
                         item.getAmount().toString(),
-                        String.format("R$ %.2f", product.getPrice())
+                        String.format("R$ %.2f", item.getPrice())
                 ));
 
                 tableCells.forEach(table::addCell);
