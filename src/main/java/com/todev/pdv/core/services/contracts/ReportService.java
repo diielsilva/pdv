@@ -10,4 +10,6 @@ public interface ReportService {
     void salesReportByDate(LocalDateTime date, HttpServletResponse response);
 
     void goodsReport(HttpServletResponse response);
+
+    void performanceReport(Integer userId, LocalDateTime start, HttpServletResponse response);
 }

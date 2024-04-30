@@ -39,4 +39,15 @@ public class ReportController {
         response.setHeader(headerKey, headerValue);
         reportService.goodsReport(response);
     }
+
+    @GetMapping("user/{userId}/performance")
+    public void performanceReport(@PathVariable Integer userId,
+                                  @RequestParam LocalDateTime start,
+                                  HttpServletResponse response) {
+        var headerKey = "Content-Disposition";
+        var headerValue = "attachment; filename=report-" + LocalDateTime.now() + ".pdf";
+        response.setContentType("application/pdf");
+        response.setHeader(headerKey, headerValue);
+        reportService.performanceReport(userId, start, response);
+    }
 }
