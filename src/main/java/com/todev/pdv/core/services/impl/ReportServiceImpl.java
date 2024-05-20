@@ -189,6 +189,53 @@ public class ReportServiceImpl implements ReportService {
         }
     }
 
+    @Override
+    public void performanceReport(Integer userId,
+                                  LocalDateTime start,
+                                  HttpServletResponse response) {
+        try (var report = new Document(PageSize.A4)) {
+            PdfWriter.getInstance(report, response.getOutputStream());
+            start = start.withHour(0).withMinute(0).withSecond(0);
+            var end = start.plusMonths(1L).withHour(23).withMinute(59).withSecond(59);
+
+            report.open();
+
+            var user = userProvider.findActiveById(userId);
+            var sales = saleProvider.findActiveByDate(start, end)
+                    .stream().filter(sale -> sale.getUserId().equals(userId)).toList();
+            var reportHeader = createReportHeader("Performance Mensal", List.of());
+            var total = 0.0;
+
+            reportHeader.forEach(report::add);
+
+            var table = createTable(4, List.of("NOME", "INÍCIO", "FIM", "TOTAL"));
+
+            for (Sale sale : sales) {
+
+                if (sale.getDiscount() > 0) {
+                    var discount = (double) sale.getDiscount() / 100 * sale.getTotal();
+                    total += sale.getTotal() - discount;
+                } else {
+                    total += sale.getTotal();
+                }
+            }
+
+            var tableContent = createTableCells(List.of(
+                    user.getName(),
+                    start.format(DateTimeFormatter.ofPattern("dd/MM/yy")),
+                    end.format(DateTimeFormatter.ofPattern("dd/MM/yy")),
+                    String.format("R$ %.2f", total)
+            ));
+
+            tableContent.forEach(table::addCell);
+
+            report.add(table);
+
+        } catch (Exception exception) {
+            throw new FileExportException("Não foi possível gerar o relatório de performance do vendedor!");
+        }
+    }
+
     private List<Paragraph> createReportHeader(String titleContent, List<String> subtitles) {
         List<Paragraph> paragraphs = new ArrayList<>();
         var title = createParagraph(titleContent, 22);

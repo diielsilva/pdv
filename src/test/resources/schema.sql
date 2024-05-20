@@ -96,6 +96,7 @@ CREATE TABLE IF NOT EXISTS customers (
     name VARCHAR(255) NOT NULL,
     phone VARCHAR(50) UNIQUE NOT NULL,
     purchases INTEGER NOT NULL,
+    birth_date DATE NOT NULL,
     created_at DATETIME NOT NULL,
     deleted_at DATETIME
 );
