@@ -144,44 +144,15 @@ public final class UserFactory {
         );
     }
 
-    public static User getInactiveSavedSeller() {
-        return new User(
-                1,
-                "Seller",
-                "seller",
-                "12345",
-                Role.SELLER,
-                LocalDateTime.now(),
-                LocalDateTime.now()
-        );
-    }
-
-    public static UserRequest getAdminWithoutIssues() {
-        return new UserRequest("Admin", "admin", "12345", "ADMIN");
-    }
-
     public static UserRequest getManagerWithoutIssues() {
         return new UserRequest("Manager", "manager", "12345", "MANAGER");
     }
 
-    public static UserRequest getSellerWithoutIssues() {
+    public static UserRequest getRequestDTO() {
         return new UserRequest("Seller", "seller", "12345", "SELLER");
     }
 
-    public static UserRequest getSellerWithAnInvalidRole() {
-        return new UserRequest("Seller", "seller", "12345", "SELLERS");
-    }
-
-    public static UserRequest getUserWithoutValues() {
-        return new UserRequest(
-                null,
-                null,
-                null,
-                null
-        );
-    }
-
-    public static UserResponse getSavedSellerWithoutIssues() {
+    public static UserResponse getResponseDTO() {
         return new UserResponse(
                 1,
                 "Seller",

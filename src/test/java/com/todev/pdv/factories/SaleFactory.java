@@ -61,7 +61,7 @@ public final class SaleFactory {
         );
     }
 
-    public static SaleRequest getSaleWithoutIssues(Integer productId) {
+    public static SaleRequest getRequestDTO(Integer productId) {
         return new SaleRequest(
                 "CARD",
                 0,
@@ -85,47 +85,7 @@ public final class SaleFactory {
         );
     }
 
-    public static SaleRequest getSaleWithoutItems() {
-        return new SaleRequest(
-                "CARD",
-                0,
-                List.of()
-        );
-    }
-
-    public static SaleRequest getSaleWithInvalidPaymentMethod(Integer productId) {
-        return new SaleRequest(
-                "CARDS",
-                0,
-                List.of(SaleItemFactory.getSaleItemWithoutIssues(productId))
-        );
-    }
-
-    public static SaleRequest getSaleWithDiscountEqualsToMinusOne(Integer productId) {
-        return new SaleRequest(
-                "CARD",
-                -1,
-                List.of(SaleItemFactory.getSaleItemWithoutIssues(productId))
-        );
-    }
-
-    public static SaleRequest getSaleWithItemsWithAmountEqualsToZero(Integer productId) {
-        return new SaleRequest(
-                "CARD",
-                100,
-                List.of(SaleItemFactory.getSaleItemWithAmountEqualsToZero(productId))
-        );
-    }
-
-    public static SaleRequest getSaleWithoutValues() {
-        return new SaleRequest(
-                null,
-                null,
-                null
-        );
-    }
-
-    public static SaleResponse getSaleResponse() {
+    public static SaleResponse getResponseDTO() {
         return new SaleResponse(
                 1,
                 PaymentMethod.CARD,

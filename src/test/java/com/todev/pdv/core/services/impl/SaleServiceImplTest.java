@@ -115,12 +115,12 @@ class SaleServiceImplTest {
                 .thenReturn(SaleItemFactory.getSaleItem());
 
         when(modelMapper.toDTO(any(Sale.class)))
-                .thenReturn(SaleFactory.getSaleResponse());
+                .thenReturn(SaleFactory.getResponseDTO());
     }
 
     @Test
     void save_SaleShouldBeSaved_WhenValidSaleWasReceived() {
-        assertDoesNotThrow(() -> saleService.save("seller", SaleFactory.getSaleWithoutIssues(1)));
+        assertDoesNotThrow(() -> saleService.save("seller", SaleFactory.getRequestDTO(1)));
     }
 
     @Test

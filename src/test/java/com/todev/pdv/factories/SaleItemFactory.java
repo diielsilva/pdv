@@ -22,6 +22,18 @@ public final class SaleItemFactory {
         );
     }
 
+    public static SaleItem getInactiveSaleItem() {
+        return new SaleItem(
+                null,
+                1,
+                1,
+                1,
+                1750.90,
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
+    }
+
     public static SaleItem getSavedSaleItem() {
         return new SaleItem(
                 1,

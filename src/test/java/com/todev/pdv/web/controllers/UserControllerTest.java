@@ -1,22 +1,22 @@
 package com.todev.pdv.web.controllers;
 
 import com.todev.pdv.common.dtos.ErrorResponse;
+import com.todev.pdv.common.dtos.UserRequest;
 import com.todev.pdv.common.dtos.UserResponse;
+import com.todev.pdv.core.models.User;
 import com.todev.pdv.core.repositories.UserRepository;
 import com.todev.pdv.factories.CredentialsFactory;
 import com.todev.pdv.factories.UserFactory;
-import com.todev.pdv.helpers.LoginHelper;
+import com.todev.pdv.helpers.SecurityHelper;
 import com.todev.pdv.wrappers.PageableResponse;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.List;
 
 import static com.todev.pdv.core.enums.Role.SELLER;
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,13 +27,21 @@ import static org.springframework.http.HttpStatus.*;
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class UserControllerTest {
     @Autowired
-    private TestRestTemplate restTemplate;
+    private TestRestTemplate apiClient;
 
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
-    private PasswordEncoder BCryptEncoder;
+    private SecurityHelper securityHelper;
+
+    private User user;
+
+    @BeforeEach
+    void setUp() {
+        securityHelper.createUser(UserFactory.getAdmin());
+        securityHelper.createUser(UserFactory.getManager());
+    }
 
     @AfterEach
     void tearDown() {
@@ -41,14 +49,15 @@ class UserControllerTest {
     }
 
     @Test
-    void save_UserShouldBeSaved_WhenValidUserWasReceivedAndOnlineUserIsAnAdmin() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/users",
+    void save_UserShouldBeSaved() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var requestBody = UserFactory.getRequestDTO();
+        var httpResponse = apiClient.exchange("/users",
                 POST,
-                new HttpEntity<>(UserFactory.getSellerWithoutIssues(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 UserResponse.class
         );
+
         assertAll(() -> {
             assertEquals(CREATED, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -61,14 +70,15 @@ class UserControllerTest {
     }
 
     @Test
-    void save_UserShouldBeSaved_WhenValidUserWasReceivedAndOnlineUserIsAManager() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/users",
+    void save_UserShouldBeSaved_WhenOnlineUserIsAManager() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var requestBody = UserFactory.getRequestDTO();
+        var httpResponse = apiClient.exchange("/users",
                 POST,
-                new HttpEntity<>(UserFactory.getSellerWithoutIssues(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 UserResponse.class
         );
+
         assertAll(() -> {
             assertEquals(CREATED, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -81,14 +91,15 @@ class UserControllerTest {
     }
 
     @Test
-    void save_UserShouldNotBeSaved_WhenAdminUserWasReceivedAndOnlineUserIsAManager() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/users",
+    void save_UserShouldNotBeSaved_WhenAdminUserWasReceived() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var requestBody = new UserRequest("Admin", "admin", "12345", "ADMIN");
+        var httpResponse = apiClient.exchange("/users",
                 POST,
-                new HttpEntity<>(UserFactory.getAdminWithoutIssues(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class
         );
+
         assertAll(() -> {
             assertEquals(BAD_REQUEST, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -97,15 +108,17 @@ class UserControllerTest {
     }
 
     @Test
-    void save_UserShouldNotBeSaved_WhenLoginIsInUseAndOnlineUserIsAManager() {
+    void save_UserShouldNotBeSaved_WhenLoginIsInUse() {
         userRepository.save(UserFactory.getSeller());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/users",
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var requestBody = UserFactory.getRequestDTO();
+        var httpResponse = apiClient.exchange("/users",
                 POST,
-                new HttpEntity<>(UserFactory.getSellerWithoutIssues(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class
         );
+
         assertAll(() -> {
             assertEquals(CONFLICT, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -114,14 +127,15 @@ class UserControllerTest {
     }
 
     @Test
-    void save_UserShouldNotBeSaved_WhenReceivedUserHasAnInvalidRoleAndOnlineUserIsAnAdmin() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/users",
+    void save_UserShouldNotBeSaved_WhenReceivedUserHasAnInvalidRole() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var requestBody = new UserRequest("Seller", "seller", "12345", "SELLERS");
+        var httpResponse = apiClient.exchange("/users",
                 POST,
-                new HttpEntity<>(UserFactory.getSellerWithAnInvalidRole(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class
         );
+
         assertAll(() -> {
             assertEquals(BAD_REQUEST, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -131,14 +145,15 @@ class UserControllerTest {
     }
 
     @Test
-    void save_UserShouldNotBeSaved_WhenReceivedUserHasNoValuesAndOnlineUserIsAManager() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/users",
+    void save_UserShouldNotBeSaved_WhenAnEmptyUserWasReceived() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var requestBody = new UserRequest(null, null, null, null);
+        var httpResponse = apiClient.exchange("/users",
                 POST,
-                new HttpEntity<>(UserFactory.getUserWithoutValues(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class
         );
+
         assertAll(() -> {
             assertEquals(BAD_REQUEST, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -148,76 +163,80 @@ class UserControllerTest {
 
     @Test
     void save_UserShouldNotBeSaved_WhenOnlineUserIsASeller() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/users",
+        securityHelper.createUser(UserFactory.getSeller());
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var requestBody = UserFactory.getRequestDTO();
+        var httpResponse = apiClient.exchange("/users",
                 POST,
-                new HttpEntity<>(UserFactory.getSellerWithoutIssues(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class
         );
+
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
 
     @Test
-    void findActive_UsersShouldBeReturned_WhenHaveActiveUsersAndOnlineUserIsAnAdmin() {
-        userRepository.saveAll(List.of(UserFactory.getManager(), UserFactory.getSeller()));
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/users/active",
+    void findActive_UsersShouldBeReturned_WhenHaveActiveUsers() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var httpResponse = apiClient.exchange("/users/active",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<PageableResponse<UserResponse>>() {
                 });
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
-            assertEquals(3, httpResponse.getBody().getContent().size());
+            assertEquals(2, httpResponse.getBody().getContent().size());
             assertNull(httpResponse.getBody().getContent().get(0).deletedAt());
             assertNull(httpResponse.getBody().getContent().get(1).deletedAt());
-            assertNull(httpResponse.getBody().getContent().get(2).deletedAt());
         });
     }
 
     @Test
     void findActive_UsersShouldBeReturned_WhenHaveActiveUsersAndOnlineUserIsAManager() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/users/active",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var httpResponse = apiClient.exchange("/users/active",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<PageableResponse<UserResponse>>() {
                 });
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
-            assertEquals(1, httpResponse.getBody().getContent().size());
+            assertEquals(2, httpResponse.getBody().getContent().size());
             assertNull(httpResponse.getBody().getContent().get(0).deletedAt());
         });
     }
 
     @Test
     void findActive_UsersShouldNotBeReturned_WhenOnlineUserIsASeller() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/users/active",
+        securityHelper.createUser(UserFactory.getSeller());
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/users/active",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 ErrorResponse.class
         );
+
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
 
     @Test
-    void findInactive_UsersShouldBeReturned_WhenHaveInactiveUsersAndOnlineUserIsAnAdmin() {
+    void findInactive_UsersShouldBeReturned_WhenHaveInactiveUsers() {
         userRepository.save(UserFactory.getInactiveSeller());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/users/inactive",
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var httpResponse = apiClient.exchange("/users/inactive",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<PageableResponse<UserResponse>>() {
                 }
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -227,14 +246,14 @@ class UserControllerTest {
     }
 
     @Test
-    void findInactive_UsersShouldNotBeReturned_WhenDoNotHaveInactiveUsersAndOnlineUserIsAManager() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/users/inactive",
+    void findInactive_UsersShouldNotBeReturned_WhenDoNotHaveInactiveUsers() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var httpResponse = apiClient.exchange("/users/inactive",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<PageableResponse<UserResponse>>() {
                 });
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -244,26 +263,27 @@ class UserControllerTest {
 
     @Test
     void findInactive_UsersShouldNotBeReturned_WhenOnlineUserIsASeller() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/users/inactive",
+        securityHelper.createUser(UserFactory.getSeller());
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/users/inactive",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 ErrorResponse.class
         );
+
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
 
     @Test
-    void findActiveByNameContaining_UsersShouldBeReturned_WhenHaveActiveUsersWithNameContainingAndOnlineUserIsAnAdmin() {
-        userRepository.saveAll(List.of(UserFactory.getManager(), UserFactory.getSeller()));
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/users/active/search?name={name}",
+    void findActiveByNameContaining_UsersShouldBeReturned_WhenHaveActiveUsersWithNameContaining() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var httpResponse = apiClient.exchange("/users/active/search?name={name}",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<PageableResponse<UserResponse>>() {
                 }, "Man");
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -273,14 +293,14 @@ class UserControllerTest {
     }
 
     @Test
-    void findActiveByNameContaining_UsersShouldNotBeReturned_WhenDoNotHaveActiveUsersWithNameContainingAndOnlineUserIsAManager() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/users/active/search?name={name}",
+    void findActiveByNameContaining_UsersShouldNotBeReturned_WhenDoNotHaveActiveUsersWithNameContaining() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var httpResponse = apiClient.exchange("/users/active/search?name={name}",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<PageableResponse<UserResponse>>() {
                 }, "Employee");
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -290,25 +310,28 @@ class UserControllerTest {
 
     @Test
     void findActiveByNameContaining_UsersShouldNotBeReturned_WhenOnlineUserIsASeller() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/users/active/search?name={name}",
+        securityHelper.createUser(UserFactory.getSeller());
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/users/active/search?name={name}",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 ErrorResponse.class, "Man");
+
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
 
     @Test
-    void findInactiveByNameContaining_UsersShouldBeReturned_WhenHaveInactiveUsersByNameContainingAndOnlineUserIsAnAdmin() {
+    void findInactiveByNameContaining_UsersShouldBeReturned_WhenHaveInactiveUsersWithNameContaining() {
         userRepository.save(UserFactory.getInactiveSeller());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/users/inactive/search?name={name}",
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var httpResponse = apiClient.exchange("/users/inactive/search?name={name}",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<PageableResponse<UserResponse>>() {
                 }, "ll");
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -318,14 +341,14 @@ class UserControllerTest {
     }
 
     @Test
-    void findInactiveByNameContaining_UsersShouldNotBeReturned_WhenDoNotHaveInactiveUsersByNameContainingAndOnlineUserIsAManger() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/users/inactive/search?name={name}",
+    void findInactiveByNameContaining_UsersShouldNotBeReturned_WhenDoNotHaveInactiveUsersWithNameContaining() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var httpResponse = apiClient.exchange("/users/inactive/search?name={name}",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<PageableResponse<UserResponse>>() {
                 }, "man");
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -335,25 +358,30 @@ class UserControllerTest {
 
     @Test
     void findInactiveByNameContaining_UsersShouldNotBeReturned_WhenOnlineUserIsASeller() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/users/inactive/search?name={name}",
+        securityHelper.createUser(UserFactory.getSeller());
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/users/inactive/search?name={name}",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 ErrorResponse.class, "ll");
+
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
 
     @Test
-    void findActiveById_UserShouldBeReturned_WhenIdWasFoundAndOnlineUserIsAnAdmin() {
+    void findActiveById_UserShouldBeReturned_WhenIdWasFound() {
         var user = userRepository.save(UserFactory.getSeller());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange(
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var httpResponse = apiClient.exchange(
                 "/users/active/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                UserResponse.class, user.getId());
+                UserResponse.class,
+                user.getId()
+        );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -363,13 +391,15 @@ class UserControllerTest {
     }
 
     @Test
-    void findActiveById_UserShouldNotBeReturned_WhenIdWasNotFoundAndOnlineUserIsAManager() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/users/active/{id}",
+    void findActiveById_UserShouldNotBeReturned_WhenIdWasNotFound() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var httpResponse = apiClient.exchange("/users/active/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class, 0);
+                ErrorResponse.class,
+                0
+        );
+
         assertAll(() -> {
             assertEquals(NOT_FOUND, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -379,25 +409,31 @@ class UserControllerTest {
 
     @Test
     void findActiveById_UserShouldNotBeReturned_WhenOnlineUserIsASeller() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/users/active/{id}",
+        securityHelper.createUser(UserFactory.getSeller());
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/users/active/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class, 1
+                ErrorResponse.class,
+                1
         );
+
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
 
     @Test
-    void findInactiveById_UserShouldBeReturned_WhenIdWasFoundAndOnlineUserIsAnAdmin() {
-        var user = userRepository.save(UserFactory.getInactiveManager());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/users/inactive/{id}",
+    void findInactiveById_UserShouldBeReturned_WhenIdWasFound() {
+        var user = userRepository.save(UserFactory.getInactiveSeller());
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var httpResponse = apiClient.exchange("/users/inactive/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                UserResponse.class, user.getId());
+                UserResponse.class,
+                user.getId()
+        );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -407,13 +443,15 @@ class UserControllerTest {
     }
 
     @Test
-    void findInactiveById_UserShouldNotBeReturned_WhenIdWasNotFoundAndOnlineUserIsAManager() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/users/inactive/{id}",
+    void findInactiveById_UserShouldNotBeReturned_WhenIdWasNotFound() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var httpResponse = apiClient.exchange("/users/inactive/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class, 0);
+                ErrorResponse.class,
+                0
+        );
+
         assertAll(() -> {
             assertEquals(NOT_FOUND, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -423,25 +461,28 @@ class UserControllerTest {
 
     @Test
     void findInactiveById_UserShouldNotBeReturned_WhenOnlineUserIsASeller() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/users/inactive/{id}",
+        securityHelper.createUser(UserFactory.getSeller());
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/users/inactive/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 ErrorResponse.class, 1);
+
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
 
     @Test
-    void update_UserShouldBeUpdated_WhenValidUserWasReceivedAndLoginWasNotInUseAndOnlineUserIsAManager() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange(
+    void update_UserShouldBeUpdated() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var requestBody = UserFactory.getRequestDTO();
+        var httpResponse = apiClient.exchange(
                 "/users",
                 PUT,
-                new HttpEntity<>(UserFactory.getSellerWithoutIssues(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 UserResponse.class
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -451,16 +492,17 @@ class UserControllerTest {
     }
 
     @Test
-    void update_UserShouldBeUpdated_WhenLoginWasInUseBySameUserAndOnlineUserIsASeller() {
-        var user = UserFactory.getSeller();
-        user.setPassword(BCryptEncoder.encode(user.getPassword()));
-        userRepository.save(user);
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/users",
+    void update_UserShouldBeUpdated_WhenLoginWasInUseBySameUser() {
+        securityHelper.createUser(UserFactory.getSeller());
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var requestBody = UserFactory.getRequestDTO();
+        var httpResponse = apiClient.exchange("/users",
                 PUT,
-                new HttpEntity<>(UserFactory.getSellerWithoutIssues(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 UserResponse.class
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -470,15 +512,17 @@ class UserControllerTest {
     }
 
     @Test
-    void update_UserShouldNotBeUpdated_WhenLoginWasInUseByAnotherUser() {
-        userRepository.save(UserFactory.getManager());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/users",
+    void update_UserShouldNotBeUpdated_WhenLoginIsInUseByAnotherUser() {
+        securityHelper.createUser(UserFactory.getSeller());
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var requestBody = new UserRequest("Manager", "manager", "12345", "MANAGER");
+        var httpResponse = apiClient.exchange("/users",
                 PUT,
-                new HttpEntity<>(UserFactory.getManagerWithoutIssues(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class
         );
+
         assertAll(() -> {
             assertEquals(CONFLICT, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -487,38 +531,49 @@ class UserControllerTest {
     }
 
     @Test
-    void delete_UserShouldBeDeleted_WhenIdWasFoundAndOnlineUserIsAnAdmin() {
-        var user = userRepository.save(UserFactory.getManager());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/users/{id}",
+    void delete_UserShouldBeDeleted_WhenIdWasFound() {
+        var user = userRepository.save(UserFactory.getSeller());
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var httpResponse = apiClient.exchange("/users/{id}",
                 DELETE,
                 new HttpEntity<>(httpHeaders),
-                Void.class, user.getId());
+                Void.class,
+                user.getId()
+        );
+
         assertEquals(NO_CONTENT, httpResponse.getStatusCode());
     }
 
     @Test
     void delete_UserShouldBeDeleted_WhenIdWasFoundAndAndOnlineUserIsAManager() {
         var user = userRepository.save(UserFactory.getSeller());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/users/{id}",
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var httpResponse = apiClient.exchange("/users/{id}",
                 DELETE,
                 new HttpEntity<>(httpHeaders),
-                Void.class, user.getId());
+                Void.class,
+                user.getId()
+        );
+
         assertEquals(NO_CONTENT, httpResponse.getStatusCode());
     }
 
     @Test
-    void delete_UserShouldNotBeDeleted_WhenUserTriesToDeleteAnAdminAndOnlineUserIsAManager() {
+    void delete_UserShouldNotBeDeleted_WhenUserTriesToDeleteAnAdmin() {
+        userRepository.deleteAll();
+        securityHelper.createUser(UserFactory.getManager());
         var user = userRepository.save(UserFactory.getAdmin());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/users/{id}",
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var httpResponse = apiClient.exchange("/users/{id}",
                 DELETE,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class, user.getId());
+                ErrorResponse.class,
+                user.getId()
+        );
+
         assertAll(() -> {
             assertEquals(BAD_REQUEST, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -528,14 +583,19 @@ class UserControllerTest {
 
     @Test
     void delete_UserShouldNotBeDeleted_WhenOnlineUserTriesToDeleteHimself() {
-        var user = UserFactory.getManager();
-        user.setPassword(BCryptEncoder.encode(user.getPassword()));
-        userRepository.save(user);
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/users/{id}",
+        userRepository.deleteAll();
+        securityHelper.createUser(UserFactory.getManager());
+        var users = userRepository.findAll();
+        users.forEach(current -> user = current);
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var httpResponse = apiClient.exchange("/users/{id}",
                 DELETE,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class, user.getId());
+                ErrorResponse.class,
+                user.getId()
+        );
+
         assertAll(() -> {
             assertEquals(BAD_REQUEST, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -544,13 +604,15 @@ class UserControllerTest {
     }
 
     @Test
-    void delete_UserShouldNotBeDeleted_WhenIdWasNotFoundAndOnlineUserIsAManager() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/users/{id}",
+    void delete_UserShouldNotBeDeleted_WhenIdWasNotFound() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var httpResponse = apiClient.exchange("/users/{id}",
                 DELETE,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class, 0);
+                ErrorResponse.class,
+                0
+        );
+
         assertAll(() -> {
             assertEquals(NOT_FOUND, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -560,35 +622,44 @@ class UserControllerTest {
 
     @Test
     void delete_UserShouldNotBeDeleted_WhenOnlineUserIsASeller() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/users/{id}",
+        securityHelper.createUser(UserFactory.getSeller());
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/users/{id}",
                 DELETE,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class, 1);
+                ErrorResponse.class,
+                1
+        );
+
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
 
     @Test
-    void reactivate_UserShouldBeReactivated_WhenIdWasFoundAndOnlineUserIsAnAdmin() {
-        var user = userRepository.save(UserFactory.getInactiveManager());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/users/{id}",
+    void reactivate_UserShouldBeReactivated_WhenIdWasFound() {
+        user = userRepository.save(UserFactory.getInactiveSeller());
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var httpResponse = apiClient.exchange("/users/{id}",
                 PATCH,
                 new HttpEntity<>(httpHeaders),
-                Void.class, user.getId());
+                Void.class,
+                user.getId()
+        );
+
         assertEquals(NO_CONTENT, httpResponse.getStatusCode());
     }
 
     @Test
-    void reactivate_UserShouldNotBeReactivated_WhenIdWasNotFoundAndOnlineUserIsAManager() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/users/{id}",
+    void reactivate_UserShouldNotBeReactivated_WhenIdWasNotFound() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var httpResponse = apiClient.exchange("/users/{id}",
                 PATCH,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class, 0);
+                ErrorResponse.class,
+                0
+        );
+
         assertAll(() -> {
             assertEquals(NOT_FOUND, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -598,12 +669,14 @@ class UserControllerTest {
 
     @Test
     void reactivate_UserShouldNotBeReactivated_WhenOnlineUserIsASeller() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/users/{id}",
+        securityHelper.createUser(UserFactory.getSeller());
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/users/{id}",
                 PATCH,
                 new HttpEntity<>(httpHeaders),
                 ErrorResponse.class, 1);
+
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
 }

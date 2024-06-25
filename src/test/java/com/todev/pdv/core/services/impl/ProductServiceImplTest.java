@@ -67,19 +67,19 @@ class ProductServiceImplTest {
                 .thenReturn(ProductFactory.getProduct());
 
         when(modelMapper.toDTO(any(Product.class)))
-                .thenReturn(ProductFactory.getProductResponse());
+                .thenReturn(ProductFactory.getResponseDTO());
     }
 
     @Test
     void save_ProductShouldBeSaved_WhenValidProductWasReceived() {
-        assertDoesNotThrow(() -> productService.save(ProductFactory.getProductWithoutIssues()));
+        assertDoesNotThrow(() -> productService.save(ProductFactory.getRequestDTO()));
     }
 
     @Test
     void save_ProductShouldNotBeSave_WhenDescriptionIsInUse() {
         when(productProvider.findByDescription(anyString()))
                 .thenReturn(Optional.of(ProductFactory.getSavedProduct()));
-        var product = ProductFactory.getProductWithoutIssues();
+        var product = ProductFactory.getRequestDTO();
         assertThrows(ConstraintConflictException.class, () -> productService.save(product));
     }
 
@@ -119,7 +119,7 @@ class ProductServiceImplTest {
 
     @Test
     void update_ProductShouldBeUpdated_WhenValidProductWasReceived() {
-        var product = ProductFactory.getProductWithoutIssues();
+        var product = ProductFactory.getRequestDTO();
         assertDoesNotThrow(() -> productService.update(1, product));
     }
 
@@ -129,7 +129,7 @@ class ProductServiceImplTest {
                 .thenReturn(Optional.of(ProductFactory.getSavedProduct()));
         when(modelMapper.toModel(any(ProductRequest.class)))
                 .thenReturn(new Product(null, "iPhone XR", 10, 1800.00, null, null));
-        var product = ProductFactory.getProductWithoutIssues();
+        var product = ProductFactory.getRequestDTO();
         assertThrows(ConstraintConflictException.class, () -> productService.update(1, product));
     }
 

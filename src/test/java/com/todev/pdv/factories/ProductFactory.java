@@ -54,7 +54,7 @@ public final class ProductFactory {
         );
     }
 
-    public static ProductRequest getProductWithoutIssues() {
+    public static ProductRequest getRequestDTO() {
         return new ProductRequest(
                 "Samsung Galaxy S20",
                 10,
@@ -62,31 +62,7 @@ public final class ProductFactory {
         );
     }
 
-    public static ProductRequest getProductWithAmountEqualsToMinusOne() {
-        return new ProductRequest(
-                "Samsung Galaxy S20",
-                -1,
-                1750.90
-        );
-    }
-
-    public static ProductRequest getProductWithPriceEqualsToMinusOne() {
-        return new ProductRequest(
-                "Samsung Galaxy S20",
-                10,
-                -1.0
-        );
-    }
-
-    public static ProductRequest getProductWithoutValues() {
-        return new ProductRequest(
-                null,
-                null,
-                null
-        );
-    }
-
-    public static ProductResponse getProductResponse() {
+    public static ProductResponse getResponseDTO() {
         return new ProductResponse(
                 1,
                 "Samsung Galaxy S20",

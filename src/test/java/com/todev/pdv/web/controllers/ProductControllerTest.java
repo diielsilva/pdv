@@ -1,23 +1,26 @@
 package com.todev.pdv.web.controllers;
 
 import com.todev.pdv.common.dtos.ErrorResponse;
+import com.todev.pdv.common.dtos.ProductRequest;
 import com.todev.pdv.common.dtos.ProductResponse;
+import com.todev.pdv.core.models.Product;
 import com.todev.pdv.core.repositories.ProductRepository;
 import com.todev.pdv.core.repositories.UserRepository;
 import com.todev.pdv.factories.CredentialsFactory;
 import com.todev.pdv.factories.ProductFactory;
 import com.todev.pdv.factories.UserFactory;
-import com.todev.pdv.helpers.LoginHelper;
+import com.todev.pdv.helpers.SecurityHelper;
 import com.todev.pdv.wrappers.PageableResponse;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,7 +31,10 @@ import static org.springframework.http.HttpStatus.*;
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class ProductControllerTest {
     @Autowired
-    private TestRestTemplate restTemplate;
+    private TestRestTemplate apiClient;
+
+    @Autowired
+    private SecurityHelper securityHelper;
 
     @Autowired
     private ProductRepository productRepository;
@@ -36,8 +42,12 @@ class ProductControllerTest {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private PasswordEncoder BCryptEncoder;
+    @BeforeEach
+    void setUp() {
+        securityHelper.createUser(UserFactory.getAdmin());
+        securityHelper.createUser(UserFactory.getManager());
+        securityHelper.createUser(UserFactory.getSeller());
+    }
 
     @AfterEach
     void tearDown() {
@@ -46,14 +56,15 @@ class ProductControllerTest {
     }
 
     @Test
-    void save_ProductShouldBeSaved_WhenValidProductWasReceivedAndOnlineUserIsAnAdmin() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/products",
+    void save_ProductShouldBeSaved() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var requestBody = ProductFactory.getRequestDTO();
+        var httpResponse = apiClient.exchange("/products",
                 POST,
-                new HttpEntity<>(ProductFactory.getProductWithoutIssues(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ProductResponse.class
         );
+
         assertAll(() -> {
             assertEquals(CREATED, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -65,15 +76,17 @@ class ProductControllerTest {
     }
 
     @Test
-    void save_ProductShouldNotBeSaved_WhenDescriptionIsInUseAndOnlineUserIsAManager() {
+    void save_ProductShouldNotBeSaved_WhenDescriptionIsInUse() {
         productRepository.save(ProductFactory.getProduct());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/products",
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var requestBody = ProductFactory.getRequestDTO();
+        var httpResponse = apiClient.exchange("/products",
                 POST,
-                new HttpEntity<>(ProductFactory.getProductWithoutIssues(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class
         );
+
         assertAll(() -> {
             assertEquals(CONFLICT, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -82,14 +95,15 @@ class ProductControllerTest {
     }
 
     @Test
-    void save_ProductShouldNotBeSaved_WhenProductWithAmountEqualsToMinusOneWasReceivedAndOnlineUserIsAManager() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/products",
+    void save_ProductShouldNotBeSaved_WhenProductWithAmountEqualsToMinusOneWasReceived() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var requestBody = new ProductRequest("Samsung Galaxy S20", -1, 1750.9);
+        var httpResponse = apiClient.exchange("/products",
                 POST,
-                new HttpEntity<>(ProductFactory.getProductWithAmountEqualsToMinusOne(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class
         );
+
         assertAll(() -> {
             assertEquals(BAD_REQUEST, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -98,14 +112,15 @@ class ProductControllerTest {
     }
 
     @Test
-    void save_ProductShouldNotBeSaved_WhenProductWithPriceEqualsToMinusOneWasReceivedAndOnlineUserIsAnAdmin() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/products",
+    void save_ProductShouldNotBeSaved_WhenProductWithPriceEqualsToMinusOneWasReceived() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var requestBody = new ProductRequest("Samsung Galaxy S20", 1, -1.0);
+        var httpResponse = apiClient.exchange("/products",
                 POST,
-                new HttpEntity<>(ProductFactory.getProductWithPriceEqualsToMinusOne(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class
         );
+
         assertAll(() -> {
             assertEquals(BAD_REQUEST, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -115,14 +130,15 @@ class ProductControllerTest {
     }
 
     @Test
-    void save_ProductShouldNotBeSaved_WhenProductWithoutValuesWasReceivedAndOnlineUserIsAnAdmin() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/products",
+    void save_ProductShouldNotBeSaved_WhenProductWithoutValuesWasReceived() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var requestBody = new ProductRequest(null, null, null);
+        var httpResponse = apiClient.exchange("/products",
                 POST,
-                new HttpEntity<>(ProductFactory.getProductWithoutValues(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class
         );
+
         assertAll(() -> {
             assertEquals(BAD_REQUEST, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -132,27 +148,29 @@ class ProductControllerTest {
 
     @Test
     void save_ProductShouldNotBeSaved_WhenOnlineUserIsASeller() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/products",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var requestBody = ProductFactory.getRequestDTO();
+        var httpResponse = apiClient.exchange("/products",
                 POST,
-                new HttpEntity<>(ProductFactory.getProduct(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class
         );
+
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
 
     @Test
     void findActive_ProductsShouldBeReturned_WhenHaveActiveProducts() {
         productRepository.save(ProductFactory.getProduct());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/products/active",
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/products/active",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<PageableResponse<ProductResponse>>() {
                 }
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -163,14 +181,14 @@ class ProductControllerTest {
 
     @Test
     void findActive_ProductsShouldNotBeReturned_WhenDoNotHaveActiveProducts() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/products/active",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/products/active",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<PageableResponse<ProductResponse>>() {
                 }
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -179,16 +197,17 @@ class ProductControllerTest {
     }
 
     @Test
-    void findInactive_ProductsShouldBeReturned_WhenHaveInactiveProductsAndOnlineUserIsAnAdmin() {
+    void findInactive_ProductsShouldBeReturned_WhenHaveInactiveProducts() {
         productRepository.save(ProductFactory.getInactiveProduct());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/products/inactive",
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var httpResponse = apiClient.exchange("/products/inactive",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<PageableResponse<ProductResponse>>() {
                 }
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -198,15 +217,15 @@ class ProductControllerTest {
     }
 
     @Test
-    void findInactive_ProductsShouldNotBeReturned_WhenDoNotHaveInactiveProductsAndOnlineUserIsAManager() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/products/inactive",
+    void findInactive_ProductsShouldNotBeReturned_WhenDoNotHaveInactiveProducts() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var httpResponse = apiClient.exchange("/products/inactive",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<PageableResponse<ProductResponse>>() {
                 }
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -216,28 +235,29 @@ class ProductControllerTest {
 
     @Test
     void findInactive_ProductsShouldNotBeReturned_WhenOnlineUserIsASeller() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/products/inactive",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/products/inactive",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 ErrorResponse.class
         );
+
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
 
     @Test
     void findActiveByDescriptionContaining_ProductsShouldBeReturned_WhenHaveActiveProductsWithDescriptionContaining() {
         productRepository.save(ProductFactory.getProduct());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/products/active/search?description={description}",
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/products/active/search?description={description}",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<PageableResponse<ProductResponse>>() {
                 },
                 "Gal"
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -249,15 +269,16 @@ class ProductControllerTest {
     @Test
     void findActiveByDescriptionContaining_ProductsShouldNotBeReturned_WhenDoNotHaveActiveProductsWithDescriptionContaining() {
         productRepository.save(ProductFactory.getProduct());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/products/active/search?description={description}",
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/products/active/search?description={description}",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<PageableResponse<ProductResponse>>() {
                 },
                 "S21"
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -266,17 +287,18 @@ class ProductControllerTest {
     }
 
     @Test
-    void findInactiveByDescriptionContaining_ProductsShouldBeReturned_WhenHaveInactiveProductsWithDescriptionContainingAndOnlineUserIsAnAdmin() {
+    void findInactiveByDescriptionContaining_ProductsShouldBeReturned_WhenHaveInactiveProductsWithDescriptionContaining() {
         productRepository.save(ProductFactory.getInactiveProduct());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/products/inactive/search?description={description}",
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var httpResponse = apiClient.exchange("/products/inactive/search?description={description}",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<PageableResponse<ProductResponse>>() {
                 },
                 "S20"
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -286,17 +308,18 @@ class ProductControllerTest {
     }
 
     @Test
-    void findInactiveByDescriptionContaining_ProductsShouldNotBeReturned_WhenDoNotInactiveProductsWithDescriptionContainingAndOnlineUserIsAManager() {
+    void findInactiveByDescriptionContaining_ProductsShouldNotBeReturned_WhenDoNotInactiveProductsWithDescriptionContaining() {
         productRepository.save(ProductFactory.getProduct());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/products/inactive/search?description={description}",
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var httpResponse = apiClient.exchange("/products/inactive/search?description={description}",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<PageableResponse<ProductResponse>>() {
                 },
                 "S20"
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -306,29 +329,29 @@ class ProductControllerTest {
 
     @Test
     void findInactiveByDescriptionContaining_ProductsShouldNotBeReturned_WhenOnlineUserIsASeller() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/products/inactive/search?description={description}",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/products/inactive/search?description={description}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<PageableResponse<ProductResponse>>() {
-                },
+                ErrorResponse.class
+                ,
                 "S20"
         );
+
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
 
     @Test
     void findActiveById_ProductShouldBeReturned_WhenIdWasFound() {
         var product = productRepository.save(ProductFactory.getProduct());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/products/active/{id}",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/products/active/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 ProductResponse.class,
                 product.getId()
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -339,14 +362,14 @@ class ProductControllerTest {
 
     @Test
     void findActiveById_ProductShouldNotBeReturned_WhenIdWasNotFound() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/products/active/{id}",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/products/active/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 ErrorResponse.class,
                 0
         );
+
         assertAll(() -> {
             assertEquals(NOT_FOUND, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -355,16 +378,16 @@ class ProductControllerTest {
     }
 
     @Test
-    void findInactiveById_ProductShouldBeReturned_WhenIdWasFoundAndOnlineUserIsAnAdmin() {
+    void findInactiveById_ProductShouldBeReturned_WhenIdWasFound() {
         var product = productRepository.save(ProductFactory.getInactiveProduct());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/products/inactive/{id}",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var httpResponse = apiClient.exchange("/products/inactive/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 ProductResponse.class,
                 product.getId()
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -374,15 +397,15 @@ class ProductControllerTest {
     }
 
     @Test
-    void findInactiveById_ProductShouldNotBeReturned_WhenIdWasNotFoundAndOnlineUserIsAManager() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/products/inactive/{id}",
+    void findInactiveById_ProductShouldNotBeReturned_WhenIdWasNotFound() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var httpResponse = apiClient.exchange("/products/inactive/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 ErrorResponse.class,
                 0
         );
+
         assertAll(() -> {
             assertEquals(NOT_FOUND, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -392,30 +415,31 @@ class ProductControllerTest {
 
     @Test
     void findInactiveById_ProductShouldNotBeReturned_WhenOnlineUserIsASeller() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/products/inactive/{id}",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/products/inactive/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 ErrorResponse.class,
                 0
         );
+
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
 
     @Test
-    void update_ProductShouldBeUpdated_WhenDescriptionIsNotInUseOnlineUserIsAnAdmin() {
-        var product = ProductFactory.getProduct();
-        product.setDescription("iPhone XR");
+    void update_ProductShouldBeUpdated_WhenDescriptionIsNotInUse() {
+        var product = new Product(null, "iPhone XR", 10, 1750.9, LocalDateTime.now(), null);
         productRepository.save(product);
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/products/{id}",
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var requestBody = ProductFactory.getRequestDTO();
+        var httpResponse = apiClient.exchange("/products/{id}",
                 PUT,
-                new HttpEntity<>(ProductFactory.getProductWithoutIssues(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ProductResponse.class,
                 product.getId()
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -425,16 +449,17 @@ class ProductControllerTest {
     }
 
     @Test
-    void update_ProductShouldBeUpdated_WhenDescriptionIsInUseBySameProductAndOnlineUserIsAManager() {
+    void update_ProductShouldBeUpdated_WhenDescriptionIsInUseBySameProduct() {
         var product = productRepository.save(ProductFactory.getProduct());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/products/{id}",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var requestBody = ProductFactory.getRequestDTO();
+        var httpResponse = apiClient.exchange("/products/{id}",
                 PUT,
-                new HttpEntity<>(ProductFactory.getProductWithoutIssues(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ProductResponse.class,
                 product.getId()
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -443,18 +468,19 @@ class ProductControllerTest {
     }
 
     @Test
-    void update_ProductShouldNotBeUpdated_WhenDescriptionIsInUseByAnotherProductAndOnlineUserIsAManager() {
-        var product = ProductFactory.getProduct();
-        product.setDescription("iPhone XR");
+    void update_ProductShouldNotBeUpdated_WhenDescriptionIsInUseByAnotherProduct() {
+        var product = new Product(null, "iPhone XR", 10, 1750.9, LocalDateTime.now(), null);
         productRepository.saveAll(List.of(product, ProductFactory.getProduct()));
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/products/{id}",
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var requestBody = ProductFactory.getRequestDTO();
+        var httpResponse = apiClient.exchange("/products/{id}",
                 PUT,
-                new HttpEntity<>(ProductFactory.getProductWithoutIssues(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class,
                 product.getId()
         );
+
         assertAll(() -> {
             assertEquals(CONFLICT, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -463,15 +489,16 @@ class ProductControllerTest {
     }
 
     @Test
-    void update_ProductShouldNotBeUpdated_WhenReceivedProductHasAmountEqualsToMinusOneAndOnlineUserIsAnAdmin() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/products/{id}",
+    void update_ProductShouldNotBeUpdated_WhenReceivedProductHasAmountEqualsToMinus() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var requestBody = new ProductRequest("iPhone XR", -1, 1750.9);
+        var httpResponse = apiClient.exchange("/products/{id}",
                 PUT,
-                new HttpEntity<>(ProductFactory.getProductWithAmountEqualsToMinusOne(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class,
                 1
         );
+
         assertAll(() -> {
             assertEquals(BAD_REQUEST, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -481,15 +508,16 @@ class ProductControllerTest {
     }
 
     @Test
-    void update_ProductShouldNotBeUpdated_WhenReceivedProductHasPriceEqualsToMinusOneAndUserIsAManager() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/products/{id}",
+    void update_ProductShouldNotBeUpdated_WhenReceivedProductHasPriceEqualsToMinusOne() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var requestBody = new ProductRequest("Samsung S20 FE", 10, -1.0);
+        var httpResponse = apiClient.exchange("/products/{id}",
                 PUT,
-                new HttpEntity<>(ProductFactory.getProductWithPriceEqualsToMinusOne(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class,
                 1
         );
+
         assertAll(() -> {
             assertEquals(BAD_REQUEST, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -499,15 +527,16 @@ class ProductControllerTest {
     }
 
     @Test
-    void update_ProductShouldNotBeUpdated_WhenProductWithoutValuesWasReceivedAndOnlineUserIsAnAdmin() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/products/{id}",
+    void update_ProductShouldNotBeUpdated_WhenEmptyProductWasReceived() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var requestBody = new ProductRequest(null, null, null);
+        var httpResponse = apiClient.exchange("/products/{id}",
                 PUT,
-                new HttpEntity<>(ProductFactory.getProductWithoutValues(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class,
                 1
         );
+
         assertAll(() -> {
             assertEquals(BAD_REQUEST, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -516,120 +545,122 @@ class ProductControllerTest {
     }
 
     @Test
-    void update_ProductShouldNotBeUpdated_WhenIdWasNotFoundAndOnlineUserIsAManager() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/products/{id}",
+    void update_ProductShouldNotBeUpdated_WhenIdWasNotFound() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var requestBody = ProductFactory.getRequestDTO();
+        var httpResponse = apiClient.exchange("/products/{id}",
                 PUT,
-                new HttpEntity<>(ProductFactory.getProductWithoutIssues(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class,
-                1
+                0
         );
+
         assertAll(() -> {
             assertEquals(NOT_FOUND, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
-            assertEquals("O produto: 1 não foi encontrado!", httpResponse.getBody().message());
+            assertEquals("O produto: 0 não foi encontrado!", httpResponse.getBody().message());
         });
     }
 
     @Test
     void update_ProductShouldNotBeUpdated_WhenOnlineUserIsASeller() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/products/{id}",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var requestBody = ProductFactory.getRequestDTO();
+        var httpResponse = apiClient.exchange("/products/{id}",
                 PUT,
-                new HttpEntity<>(ProductFactory.getProductWithoutIssues(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class,
                 1
         );
+
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
 
     @Test
-    void delete_ProductShouldBeDeleted_WhenIdWasFoundAndOnlineUserIsAnAdmin() {
+    void delete_ProductShouldBeDeleted_WhenIdWasFound() {
         var product = productRepository.save(ProductFactory.getProduct());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/products/{id}",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var httpResponse = apiClient.exchange("/products/{id}",
                 DELETE,
                 new HttpEntity<>(httpHeaders),
                 Void.class,
                 product.getId()
         );
+
         assertEquals(NO_CONTENT, httpResponse.getStatusCode());
     }
 
     @Test
-    void delete_ProductShouldNotBeDeleted_WhenIdWasNotFoundAndOnlineUserIsAManager() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/products/{id}",
+    void delete_ProductShouldNotBeDeleted_WhenIdWasNotFound() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var httpResponse = apiClient.exchange("/products/{id}",
                 DELETE,
                 new HttpEntity<>(httpHeaders),
                 ErrorResponse.class,
-                1
+                0
         );
+
         assertAll(() -> {
             assertEquals(NOT_FOUND, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
-            assertEquals("O produto: 1 não foi encontrado!", httpResponse.getBody().message());
+            assertEquals("O produto: 0 não foi encontrado!", httpResponse.getBody().message());
         });
     }
 
     @Test
     void delete_ProductShouldNotBeDeleted_WhenOnlineUserIsASeller() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/products/{id}",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/products/{id}",
                 DELETE,
                 new HttpEntity<>(httpHeaders),
                 ErrorResponse.class,
                 1
         );
+
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
 
     @Test
-    void reactivate_ProductShouldBeReactivated_WhenIdWasFoundAndOnlineUserIsAnAdmin() {
+    void reactivate_ProductShouldBeReactivated_WhenIdWasFound() {
         var product = productRepository.save(ProductFactory.getInactiveProduct());
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/products/{id}",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var httpResponse = apiClient.exchange("/products/{id}",
                 PATCH,
                 new HttpEntity<>(httpHeaders),
                 Void.class,
                 product.getId()
         );
+
         assertEquals(NO_CONTENT, httpResponse.getStatusCode());
     }
 
     @Test
-    void reactivate_ProductShouldNotBeReactivated_WhenIdWasNotFoundAndOnlineUserIsAManager() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/products/{id}",
+    void reactivate_ProductShouldNotBeReactivated_WhenIdWasNotFound() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var httpResponse = apiClient.exchange("/products/{id}",
                 PATCH,
                 new HttpEntity<>(httpHeaders),
                 ErrorResponse.class,
-                1
+                0
         );
+
         assertAll(() -> {
             assertEquals(NOT_FOUND, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
-            assertEquals("O produto: 1 não foi encontrado!", httpResponse.getBody().message());
+            assertEquals("O produto: 0 não foi encontrado!", httpResponse.getBody().message());
         });
     }
 
     @Test
     void reactivate_ProductShouldNotBeReactivated_WhenOnlineUserIsASeller() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/products/{id}",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/products/{id}",
                 PATCH,
                 new HttpEntity<>(httpHeaders),
                 ErrorResponse.class,
                 1
         );
+
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
 }

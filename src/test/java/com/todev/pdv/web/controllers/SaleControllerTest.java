@@ -1,15 +1,15 @@
 package com.todev.pdv.web.controllers;
 
-import com.todev.pdv.common.dtos.ErrorResponse;
-import com.todev.pdv.common.dtos.SaleDetailsResponse;
-import com.todev.pdv.common.dtos.SaleResponse;
+import com.todev.pdv.common.dtos.*;
 import com.todev.pdv.core.models.Product;
+import com.todev.pdv.core.models.Sale;
+import com.todev.pdv.core.models.SaleItem;
 import com.todev.pdv.core.repositories.ProductRepository;
 import com.todev.pdv.core.repositories.SaleItemRepository;
 import com.todev.pdv.core.repositories.SaleRepository;
 import com.todev.pdv.core.repositories.UserRepository;
 import com.todev.pdv.factories.*;
-import com.todev.pdv.helpers.LoginHelper;
+import com.todev.pdv.helpers.SecurityHelper;
 import com.todev.pdv.wrappers.PageableResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +19,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,7 +31,7 @@ import static org.springframework.http.HttpStatus.*;
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class SaleControllerTest {
     @Autowired
-    private TestRestTemplate restTemplate;
+    private TestRestTemplate apiClient;
 
     @Autowired
     private ProductRepository productRepository;
@@ -47,13 +46,20 @@ class SaleControllerTest {
     private SaleItemRepository saleItemRepository;
 
     @Autowired
-    private PasswordEncoder BCryptEncoder;
+    private SecurityHelper securityHelper;
 
     private Product product;
 
+    private Sale sale;
+
+    private SaleItem saleItem;
+
     @BeforeEach
-    void setUpProductRepository() {
+    void setUp() {
         product = productRepository.save(ProductFactory.getProduct());
+        securityHelper.createUser(UserFactory.getAdmin());
+        securityHelper.createUser(UserFactory.getManager());
+        securityHelper.createUser(UserFactory.getSeller());
     }
 
     @AfterEach
@@ -65,15 +71,17 @@ class SaleControllerTest {
     }
 
     @Test
-    void save_SaleShouldBeSaved_WhenValidSaleWasReceivedAndOnlineUseIsASeller() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/sales",
+    void save_SaleShouldBeSaved() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var requestBody = SaleFactory.getRequestDTO(product.getId());
+        var httpResponse = apiClient.exchange("/sales",
                 POST,
-                new HttpEntity<>(SaleFactory.getSaleWithoutIssues(product.getId()), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 SaleResponse.class
         );
+
         var productById = productRepository.findByIdAndDeletedAtIsNull(product.getId());
+
         assertAll(() -> {
             assertEquals(CREATED, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -85,13 +93,17 @@ class SaleControllerTest {
 
     @Test
     void save_SaleShouldNotBeSaved_WhenReceivedSaleHasDuplicatedProducts() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/sales",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var requestBody = new SaleRequest("CARD", 0,
+                List.of(new SaleItemRequest(product.getId(), 1),
+                        new SaleItemRequest(product.getId(), 1)
+                ));
+        var httpResponse = apiClient.exchange("/sales",
                 POST,
-                new HttpEntity<>(SaleFactory.getSaleWithDuplicatedItems(product.getId()), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class
         );
+
         assertAll(() -> {
             assertEquals(BAD_REQUEST, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -101,13 +113,16 @@ class SaleControllerTest {
 
     @Test
     void save_SaleShouldNotBeSaved_WhenReceivedSaleHasProductsWithNotEnoughStock() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/sales",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var requestBody = new SaleRequest("CARD", 0,
+                List.of(new SaleItemRequest(product.getId(), 100)
+                ));
+        var httpResponse = apiClient.exchange("/sales",
                 POST,
-                new HttpEntity<>(SaleFactory.getSaleWithNotEnoughStockItems(product.getId()), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class
         );
+
         assertAll(() -> {
             assertEquals(BAD_REQUEST, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -117,13 +132,14 @@ class SaleControllerTest {
 
     @Test
     void save_SaleShouldNotBeSaved_WhenReceivedSaleDoesNotHaveItems() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/sales",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var requestBody = new SaleRequest("CARD", 0, List.of());
+        var httpResponse = apiClient.exchange("/sales",
                 POST,
-                new HttpEntity<>(SaleFactory.getSaleWithoutItems(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class
         );
+
         assertAll(() -> {
             assertEquals(BAD_REQUEST, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -134,13 +150,16 @@ class SaleControllerTest {
 
     @Test
     void save_SaleShouldNotBeSaved_WhenReceivedSaleHasAnInvalidPaymentMethod() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/sales",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var requestBody = new SaleRequest("CARDS", 0,
+                List.of(new SaleItemRequest(product.getId(), 1)
+                ));
+        var httpResponse = apiClient.exchange("/sales",
                 POST,
-                new HttpEntity<>(SaleFactory.getSaleWithInvalidPaymentMethod(product.getId()), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class
         );
+
         assertAll(() -> {
             assertEquals(BAD_REQUEST, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -151,47 +170,55 @@ class SaleControllerTest {
 
     @Test
     void save_SaleShouldNotBeSaved_WhenReceivedSaleHasAnInvalidDiscount() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/sales",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var requestBody = new SaleRequest("CARD", -1,
+                List.of(new SaleItemRequest(product.getId(), 1)
+                ));
+        var httpResponse = apiClient.exchange("/sales",
                 POST,
-                new HttpEntity<>(SaleFactory.getSaleWithDiscountEqualsToMinusOne(product.getId()), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class
         );
+
         assertAll(() -> {
             assertEquals(BAD_REQUEST, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
             assertEquals(1, httpResponse.getBody().details().size());
-            assertEquals("O desconto deve ser maior ou igual a zero!", httpResponse.getBody().details().stream().toList().get(0));
+            assertEquals("O desconto deve ser maior ou igual a zero!",
+                    httpResponse.getBody().details().stream().toList().get(0));
         });
     }
 
     @Test
     void save_SaleShouldNotBeSaved_WhenReceivedSaleHasItemsWithAmountEqualsToZero() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/sales",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var requestBody = new SaleRequest("CARD", 0,
+                List.of(new SaleItemRequest(product.getId(), 0)));
+        var httpResponse = apiClient.exchange("/sales",
                 POST,
-                new HttpEntity<>(SaleFactory.getSaleWithItemsWithAmountEqualsToZero(product.getId()), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class
         );
+
         assertAll(() -> {
             assertEquals(BAD_REQUEST, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
             assertEquals(1, httpResponse.getBody().details().size());
-            assertEquals("A quantidade do item deve ser maior ou igual a um!", httpResponse.getBody().details().stream().toList().get(0));
+            assertEquals("A quantidade do item deve ser maior ou igual a um!",
+                    httpResponse.getBody().details().stream().toList().get(0));
         });
     }
 
     @Test
     void save_SaleShouldNotBeSaved_WhenReceivedSaleHasEmptyValues() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/sales",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var requestBody = new SaleRequest(null, null, null);
+        var httpResponse = apiClient.exchange("/sales",
                 POST,
-                new HttpEntity<>(SaleFactory.getSaleWithoutValues(), httpHeaders),
+                new HttpEntity<>(requestBody, httpHeaders),
                 ErrorResponse.class
         );
+
         assertAll(() -> {
             assertEquals(BAD_REQUEST, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -201,38 +228,40 @@ class SaleControllerTest {
 
     @Test
     void findActive_SalesShouldBeReturned_WhenHaveActiveSales() {
-        var user = UserFactory.getSeller();
-        var sale = SaleFactory.getSale();
-        userRepository.save(user);
-        sale.setUserId(user.getId());
-        saleRepository.save(sale);
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange(
+        var users = userRepository.findAll();
+        users.forEach(user -> {
+            sale = SaleFactory.getSale();
+            sale.setUserId(user.getId());
+            saleRepository.save(sale);
+        });
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var httpResponse = apiClient.exchange(
                 "/sales/active",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<PageableResponse<SaleResponse>>() {
                 }
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
-            assertEquals(1, httpResponse.getBody().getContent().size());
+            assertEquals(3, httpResponse.getBody().getContent().size());
             assertNull(httpResponse.getBody().getContent().get(0).deletedAt());
         });
     }
 
     @Test
     void findActive_SalesShouldNotBeReturned_WhenDoNotHaveActiveSales() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/sales/active",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/sales/active",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<PageableResponse<SaleResponse>>() {
                 }
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -241,40 +270,42 @@ class SaleControllerTest {
     }
 
     @Test
-    void findInactive_SalesShouldBeReturned_WhenHaveInactiveSalesAndOnlineUserIsAnAdmin() {
-        var user = UserFactory.getSeller();
-        var sale = SaleFactory.getInactiveSale();
-        userRepository.save(user);
-        sale.setUserId(user.getId());
-        saleRepository.save(sale);
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange(
+    void findInactive_SalesShouldBeReturned_WhenHaveInactiveSales() {
+        var users = userRepository.findAll();
+        users.forEach(user -> {
+            sale = SaleFactory.getInactiveSale();
+            sale.setUserId(user.getId());
+            saleRepository.save(sale);
+        });
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var httpResponse = apiClient.exchange(
                 "/sales/inactive",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<PageableResponse<SaleResponse>>() {
                 }
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
-            assertEquals(1, httpResponse.getBody().getContent().size());
+            assertEquals(3, httpResponse.getBody().getContent().size());
             assertNotNull(httpResponse.getBody().getContent().get(0).deletedAt());
         });
     }
 
     @Test
-    void findInactive_SalesShouldNotBeReturned_WhenDoNotHaveInactiveSalesAndOnlineUserIsAManager() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange(
+    void findInactive_SalesShouldNotBeReturned_WhenDoNotHaveInactiveSales() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var httpResponse = apiClient.exchange(
                 "/sales/inactive",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<PageableResponse<SaleResponse>>() {
                 }
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -284,37 +315,40 @@ class SaleControllerTest {
 
     @Test
     void findInactive_SalesShouldNotBeReturned_WhenOnlineUserIsASeller() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/sales/inactive",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/sales/inactive",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 ErrorResponse.class
         );
+
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
 
     @Test
     void details_SaleDetailsShouldBeReturned_WhenIdWasFound() {
-        var user = userRepository.save(UserFactory.getSeller());
-        var sale = SaleFactory.getSale();
-        sale.setUserId(user.getId());
-        saleRepository.save(sale);
-        var item = SaleItemFactory.getSaleItem();
-        item.setSaleId(sale.getId());
-        item.setProductId(product.getId());
-        saleItemRepository.save(item);
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/sales/details/{id}",
+        var users = userRepository.findAll();
+        users.forEach(user -> {
+            sale = SaleFactory.getSale();
+            sale.setUserId(user.getId());
+            saleRepository.save(sale);
+
+            var item = SaleItemFactory.getSaleItem();
+            item.setSaleId(sale.getId());
+            item.setProductId(product.getId());
+            saleItemRepository.save(item);
+        });
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var httpResponse = apiClient.exchange("/sales/details/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 SaleDetailsResponse.class,
                 sale.getId());
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
-            assertEquals("Seller", httpResponse.getBody().sellerName());
             assertEquals(1, httpResponse.getBody().items().size());
             assertEquals("Samsung Galaxy S20", httpResponse.getBody().items().get(0).productDescription());
             assertNotNull(httpResponse.getBody().items().get(0).id());
@@ -325,29 +359,31 @@ class SaleControllerTest {
 
     @Test
     void details_SaleDetailsShouldNotBeReturned_WhenIdWasNotFound() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/sales/details/{id}",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/sales/details/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 ErrorResponse.class,
-                1);
+                0);
+
         assertAll(() -> {
             assertEquals(NOT_FOUND, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
-            assertEquals("A venda: 1 não foi encontrada!", httpResponse.getBody().message());
+            assertEquals("A venda: 0 não foi encontrada!", httpResponse.getBody().message());
         });
     }
 
     @Test
     void findActiveBySelectedDate_SalesShouldBeReturn_WhenHaveActiveSalesWithSelectedDate() {
-        var user = userRepository.save(UserFactory.getSeller());
-        var sale = SaleFactory.getSale();
-        sale.setUserId(user.getId());
-        saleRepository.save(sale);
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange(
+        var users = userRepository.findAll();
+        users.forEach(user -> {
+            sale = SaleFactory.getSale();
+            sale.setUserId(user.getId());
+            saleRepository.save(sale);
+        });
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var httpResponse = apiClient.exchange(
                 "/sales/active/search?date={date}",
                 GET,
                 new HttpEntity<>(httpHeaders),
@@ -355,10 +391,11 @@ class SaleControllerTest {
                 },
                 LocalDateTime.now()
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
-            assertEquals(1, httpResponse.getBody().size());
+            assertEquals(3, httpResponse.getBody().size());
             assertNull(httpResponse.getBody().get(0).deletedAt());
         });
     }
@@ -366,13 +403,15 @@ class SaleControllerTest {
     @Test
     void findActiveBySelectedDate_SalesShouldNotBeReturned_WhenDoNotHaveActiveSalesWithSelectedDate() {
         var selectedDate = LocalDateTime.now().plusDays(1L);
-        var user = userRepository.save(UserFactory.getSeller());
-        var sale = SaleFactory.getSale();
-        sale.setUserId(user.getId());
-        saleRepository.save(sale);
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange(
+        var users = userRepository.findAll();
+        users.forEach(user -> {
+            sale = SaleFactory.getSale();
+            sale.setUserId(user.getId());
+            saleRepository.save(sale);
+        });
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var httpResponse = apiClient.exchange(
                 "/sales/active/search?date={date}",
                 GET,
                 new HttpEntity<>(httpHeaders),
@@ -380,6 +419,7 @@ class SaleControllerTest {
                 },
                 selectedDate
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -388,44 +428,51 @@ class SaleControllerTest {
     }
 
     @Test
-    void findInactiveBySelectedDate_SalesShouldBeReturned_WhenHaveInactiveSalesWithSelectedDateAndOnlineUserIsAnAdmin() {
-        var user = userRepository.save(UserFactory.getSeller());
-        var sale = SaleFactory.getInactiveSale();
-        sale.setUserId(user.getId());
-        saleRepository.save(sale);
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/sales/inactive/search?date={date}",
+    void findInactiveBySelectedDate_SalesShouldBeReturned_WhenHaveInactiveSalesWithSelectedDate() {
+        var users = userRepository.findAll();
+        users.forEach(user -> {
+            sale = SaleFactory.getInactiveSale();
+            sale.setUserId(user.getId());
+            saleRepository.save(sale);
+        });
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var httpResponse = apiClient.exchange("/sales/inactive/search?date={date}",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<List<SaleResponse>>() {
                 },
                 LocalDateTime.now()
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
-            assertEquals(1, httpResponse.getBody().size());
+            assertEquals(3, httpResponse.getBody().size());
             assertNotNull(httpResponse.getBody().get(0).deletedAt());
         });
     }
 
     @Test
-    void findInactiveBySelectedDate_SalesShouldNotBeReturned_WhenDoNotInactiveSalesWithSelectedDateAndOnlineUserIsAManager() {
-        var user = userRepository.save(UserFactory.getSeller());
-        var sale = SaleFactory.getInactiveSale();
-        sale.setUserId(user.getId());
-        saleRepository.save(sale);
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange(
+    void findInactiveBySelectedDate_SalesShouldNotBeReturned_WhenDoNotInactiveSalesWithSelectedDate() {
+        var selectedSale = LocalDateTime.now().plusDays(1L);
+        var users = userRepository.findAll();
+        users.forEach(user -> {
+            sale = SaleFactory.getInactiveSale();
+            sale.setUserId(user.getId());
+            saleRepository.save(sale);
+        });
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var httpResponse = apiClient.exchange(
                 "/sales/inactive/search?date={date}",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 new ParameterizedTypeReference<List<SaleResponse>>() {
                 },
-                LocalDateTime.now().plusDays(1L)
+                selectedSale
         );
+
         assertAll(() -> {
             assertEquals(OK, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -435,35 +482,39 @@ class SaleControllerTest {
 
     @Test
     void findInactiveBySelectedDate_SalesShouldNotBeReturned_WhenOnlineUserIsASeller() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/sales/inactive/search?date={date}",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/sales/inactive/search?date={date}",
                 GET,
                 new HttpEntity<>(httpHeaders),
                 ErrorResponse.class,
                 LocalDateTime.now()
         );
+
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
 
     @Test
-    void delete_SaleShouldBeDeleted_WhenIdWasFoundAndOnlineUserIsAManager() {
-        var user = userRepository.save(UserFactory.getSeller());
-        var sale = SaleFactory.getSale();
-        sale.setUserId(user.getId());
-        saleRepository.save(sale);
-        var saleItem = SaleItemFactory.getSaleItem();
-        saleItem.setSaleId(sale.getId());
-        saleItem.setProductId(product.getId());
-        saleItemRepository.save(saleItem);
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/sales/{id}",
+    void delete_SaleShouldBeDeleted_WhenIdWasFound() {
+        var users = userRepository.findAll();
+        users.forEach(user -> {
+            sale = SaleFactory.getSale();
+            sale.setUserId(user.getId());
+            saleRepository.save(sale);
+
+            saleItem = SaleItemFactory.getSaleItem();
+            saleItem.setSaleId(sale.getId());
+            saleItem.setProductId(product.getId());
+            saleItemRepository.save(saleItem);
+        });
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var httpResponse = apiClient.exchange("/sales/{id}",
                 DELETE,
                 new HttpEntity<>(httpHeaders),
                 Void.class,
                 sale.getId()
         );
+
         assertAll(() -> {
             var saleItems = saleItemRepository.findBySaleId(sale.getId());
             assertEquals(NO_CONTENT, httpResponse.getStatusCode());
@@ -473,53 +524,57 @@ class SaleControllerTest {
     }
 
     @Test
-    void delete_SaleShouldNotBeDeleted_WhenIdWasNotFoundAndOnlineUserIsAnAdmin() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/sales/{id}",
+    void delete_SaleShouldNotBeDeleted_WhenIdWasNotFound() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var httpResponse = apiClient.exchange("/sales/{id}",
                 DELETE,
                 new HttpEntity<>(httpHeaders),
                 ErrorResponse.class,
-                1
+                0
         );
+
         assertAll(() -> {
             assertEquals(NOT_FOUND, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
-            assertEquals("A venda: 1 não foi encontrada!", httpResponse.getBody().message());
+            assertEquals("A venda: 0 não foi encontrada!", httpResponse.getBody().message());
         });
     }
 
     @Test
     void delete_SaleShouldNotBeDeleted_WhenOnlineUserIsASeller() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/sales/{id}",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/sales/{id}",
                 DELETE,
                 new HttpEntity<>(httpHeaders),
                 ErrorResponse.class,
-                1
+                0
         );
+
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
 
     @Test
-    void reactive_SaleShouldBeReactivated_WhenIdWasFoundAndOnlineUserIsAnAdmin() {
-        var user = userRepository.save(UserFactory.getSeller());
-        var sale = SaleFactory.getInactiveSale();
-        var item = SaleItemFactory.getSaleItem();
-        sale.setUserId(user.getId());
-        saleRepository.save(sale);
-        item.setSaleId(sale.getId());
-        item.setProductId(product.getId());
-        saleItemRepository.save(item);
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/sales/{id}",
+    void reactive_SaleShouldBeReactivated_WhenIdWasFound() {
+        var users = userRepository.findAll();
+        users.forEach(user -> {
+            sale = SaleFactory.getInactiveSale();
+            sale.setUserId(user.getId());
+            saleRepository.save(sale);
+
+            saleItem = SaleItemFactory.getInactiveSaleItem();
+            saleItem.setSaleId(sale.getId());
+            saleItem.setProductId(product.getId());
+            saleItemRepository.save(saleItem);
+        });
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var httpResponse = apiClient.exchange("/sales/{id}",
                 PATCH,
                 new HttpEntity<>(httpHeaders),
                 Void.class,
                 sale.getId()
         );
+
         assertAll(() -> {
             var saleItems = saleItemRepository.findBySaleId(sale.getId());
             assertEquals(NO_CONTENT, httpResponse.getStatusCode());
@@ -529,24 +584,29 @@ class SaleControllerTest {
     }
 
     @Test
-    void reactivate_SaleShouldNotBeReactivated_WhenDoesNotHaveEnoughStockAndOnlineUserIsAManager() {
-        var user = userRepository.save(UserFactory.getSeller());
-        var sale = SaleFactory.getInactiveSale();
-        var item = SaleItemFactory.getSaleItem();
-        sale.setUserId(user.getId());
-        saleRepository.save(sale);
-        item.setSaleId(sale.getId());
-        item.setProductId(product.getId());
-        item.setAmount(100);
-        saleItemRepository.save(item);
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getManager());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getManagerCredentials());
-        var httpResponse = restTemplate.exchange("/sales/{id}",
+    void reactivate_SaleShouldNotBeReactivated_WhenDoesNotHaveEnoughStock() {
+        var users = userRepository.findAll();
+        users.forEach(user -> {
+            sale = SaleFactory.getInactiveSale();
+            sale.setUserId(user.getId());
+            saleRepository.save(sale);
+
+            saleItem = SaleItemFactory.getInactiveSaleItem();
+            saleItem.setSaleId(sale.getId());
+            saleItem.setProductId(product.getId());
+            saleItem.setAmount(100);
+            saleItemRepository.save(saleItem);
+        });
+
+
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
+        var httpResponse = apiClient.exchange("/sales/{id}",
                 PATCH,
                 new HttpEntity<>(httpHeaders),
                 ErrorResponse.class,
                 sale.getId()
         );
+
         assertAll(() -> {
             assertEquals(BAD_REQUEST, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
@@ -555,30 +615,32 @@ class SaleControllerTest {
     }
 
     @Test
-    void reactivate_SaleShouldNotBeReactivated_WhenIdWasNotFoundAndOnlineUserIsAnAdmin() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getAdmin());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getAdminCredentials());
-        var httpResponse = restTemplate.exchange("/sales/{id}",
+    void reactivate_SaleShouldNotBeReactivated_WhenIdWasNotFound() {
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
+        var httpResponse = apiClient.exchange("/sales/{id}",
                 PATCH,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class, 1);
+                ErrorResponse.class,
+                0
+        );
+
         assertAll(() -> {
             assertEquals(NOT_FOUND, httpResponse.getStatusCode());
             assertNotNull(httpResponse.getBody());
-            assertEquals("A venda: 1 não foi encontrada!", httpResponse.getBody().message());
+            assertEquals("A venda: 0 não foi encontrada!", httpResponse.getBody().message());
         });
     }
 
     @Test
     void reactivate_SaleShouldNotBeReactivated_WhenOnlineUserIsASeller() {
-        LoginHelper.setAuthentication(userRepository, BCryptEncoder, UserFactory.getSeller());
-        var httpHeaders = LoginHelper.getAuthentication(restTemplate, CredentialsFactory.getSellerCredentials());
-        var httpResponse = restTemplate.exchange("/sales/{id}",
+        var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        var httpResponse = apiClient.exchange("/sales/{id}",
                 PATCH,
                 new HttpEntity<>(httpHeaders),
                 ErrorResponse.class,
-                1
+                0
         );
+
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
 

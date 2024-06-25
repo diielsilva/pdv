@@ -41,7 +41,7 @@ class UserServiceImplTest {
     private ModelMapper modelMapper;
 
     @BeforeEach
-    void setUpUserProvider() {
+    void setUp() {
         when(userProvider.save(any(User.class)))
                 .thenReturn(UserFactory.getSavedSeller());
 
@@ -68,33 +68,30 @@ class UserServiceImplTest {
 
         when(userProvider.findActiveByLogin(anyString()))
                 .thenReturn(UserFactory.getSavedSeller());
-    }
 
-    @BeforeEach
-    void setUpPasswordEncoder() {
         when(BCryptEncoder.encode(anyString()))
                 .thenReturn("12345");
-    }
 
-    @BeforeEach
-    void setUpModelMapper() {
         when(modelMapper.toModel(any(UserRequest.class)))
                 .thenReturn(UserFactory.getSeller());
 
         when(modelMapper.toDTO(any(User.class)))
-                .thenReturn(UserFactory.getSavedSellerWithoutIssues());
+                .thenReturn(UserFactory.getResponseDTO());
+
     }
 
     @Test
-    void save_UserShouldBeSaved_WhenValidUserWasReceived() {
-        assertDoesNotThrow(() -> userService.save(UserFactory.getSellerWithoutIssues()));
+    void save_UserShouldBeSaved() {
+        assertDoesNotThrow(() -> userService.save(UserFactory.getRequestDTO()));
     }
 
     @Test
     void save_UserShouldNotBeSaved_WhenUserIsAnAdmin() {
         when(modelMapper.toModel(any(UserRequest.class)))
                 .thenReturn(UserFactory.getAdmin());
-        var user = UserFactory.getAdminWithoutIssues();
+
+        var user = new UserRequest("Admin", "admin", "12345", "ADMIN");
+
         assertThrows(PermissionDeniedException.class, () -> userService.save(user));
     }
 
@@ -102,31 +99,37 @@ class UserServiceImplTest {
     void save_UserShouldNotBeSaved_WhenLoginIsInUse() {
         when(userProvider.findByLogin(anyString()))
                 .thenReturn(Optional.of(UserFactory.getSavedManager()));
-        var user = UserFactory.getManagerWithoutIssues();
+
+        var user = new UserRequest("Manager", "manager", "12345", "MANAGER");
+
         assertThrows(ConstraintConflictException.class, () -> userService.save(user));
     }
 
     @Test
-    void findActive_UsersShouldBeReturned_WhenHaveActiveUsers() {
+    void findActive_UsersShouldBeReturned() {
         var users = userService.findActive(PageRequest.of(0, 5));
+
         assertEquals(1, users.getContent().size());
     }
 
     @Test
-    void findInactive_UsersShouldBeReturned_WhenHaveInactiveUsers() {
+    void findInactive_UsersShouldBeReturned() {
         var users = userService.findInactive(PageRequest.of(0, 5));
+
         assertEquals(1, users.getContent().size());
     }
 
     @Test
     void findActiveByNameContaining_UsersShouldBeReturned_WhenHaveActiveUsersWithNameContaining() {
         var users = userService.findActiveByNameContaining("Sel", PageRequest.of(0, 5));
+
         assertEquals(1, users.getContent().size());
     }
 
     @Test
     void findInactiveByNameContaining_UsersShouldBeReturned_WhenHaveInactiveUsersWithNameContaining() {
         var users = userService.findInactiveByNameContaining("Man", PageRequest.of(0, 5));
+
         assertEquals(1, users.getContent().size());
     }
 
@@ -144,7 +147,9 @@ class UserServiceImplTest {
     void update_UserShouldBeUpdated_WhenValidUserWasReceivedAndLoginIsInUseBySameUser() {
         when(userProvider.findByLogin(anyString()))
                 .thenReturn(Optional.of(UserFactory.getSavedSeller()));
-        var user = UserFactory.getSellerWithoutIssues();
+
+        var user = UserFactory.getRequestDTO();
+
         assertDoesNotThrow(() -> userService.update("seller", user));
     }
 
