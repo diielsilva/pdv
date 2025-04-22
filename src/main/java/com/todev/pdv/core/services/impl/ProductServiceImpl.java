@@ -13,12 +13,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
     private final ProductProvider productProvider;
     private final ModelMapper modelMapper;
+    private static final String ZONE_ID = "America/Sao_Paulo";
 
     @Transactional
     @Override
@@ -29,7 +31,7 @@ public class ProductServiceImpl implements ProductService {
             throw new ConstraintConflictException(String.format("A descrição: %s já está em uso!", product.getDescription()));
         }
 
-        product.setCreatedAt(LocalDateTime.now());
+        product.setCreatedAt(LocalDateTime.now(ZoneId.of(ZONE_ID)));
         productProvider.save(product);
         return modelMapper.toDTO(product);
     }
@@ -92,7 +94,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void delete(Integer id) {
         var product = productProvider.findActiveById(id);
-        product.setDeletedAt(LocalDateTime.now());
+        product.setDeletedAt(LocalDateTime.now(ZoneId.of(ZONE_ID)));
         productProvider.save(product);
     }
 

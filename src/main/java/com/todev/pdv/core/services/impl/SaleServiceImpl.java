@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +32,7 @@ public class SaleServiceImpl implements SaleService {
     private final ProductProvider productProvider;
     private final UserProvider userProvider;
     private final ModelMapper modelMapper;
+    private static final String ZONE_ID = "America/Sao_Paulo";
 
     @Transactional
     @Override
@@ -46,7 +48,7 @@ public class SaleServiceImpl implements SaleService {
 
         sale.setUserId(user.getId());
         sale.setTotal(total);
-        sale.setCreatedAt(LocalDateTime.now());
+        sale.setCreatedAt(LocalDateTime.now(ZoneId.of(ZONE_ID)));
         saleProvider.save(sale);
 
         for (SaleItem item : items) {
@@ -59,7 +61,7 @@ public class SaleServiceImpl implements SaleService {
             total += item.getAmount() * product.getPrice();
             product.setAmount(product.getAmount() - item.getAmount());
             item.setSaleId(sale.getId());
-            item.setCreatedAt(LocalDateTime.now());
+            item.setCreatedAt(LocalDateTime.now(ZoneId.of(ZONE_ID)));
             item.setPrice(product.getPrice());
             productProvider.save(product);
             saleItemProvider.save(item);
@@ -135,13 +137,13 @@ public class SaleServiceImpl implements SaleService {
         saleItems.forEach(item -> {
             var product = productProvider.findById(item.getProductId());
             product.setAmount(product.getAmount() + item.getAmount());
-            item.setDeletedAt(LocalDateTime.now());
+            item.setDeletedAt(LocalDateTime.now(ZoneId.of(ZONE_ID)));
 
             productProvider.save(product);
             saleItemProvider.save(item);
         });
 
-        sale.setDeletedAt(LocalDateTime.now());
+        sale.setDeletedAt(LocalDateTime.now(ZoneId.of(ZONE_ID)));
         saleProvider.save(sale);
     }
 
