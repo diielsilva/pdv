@@ -1,10 +1,6 @@
 package com.todev.pdv.core.models;
 
 import com.todev.pdv.core.enums.Role;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,10 +12,6 @@ import java.util.Collection;
 import java.util.List;
 
 @Table(name = "users")
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
 public class User implements UserDetails {
     @Id
     private Integer id;
@@ -29,6 +21,75 @@ public class User implements UserDetails {
     private Role role;
     private LocalDateTime createdAt;
     private LocalDateTime deletedAt;
+
+    public User(Integer id, String name, String login, String password, Role role, LocalDateTime createdAt, LocalDateTime deletedAt) {
+        this.id = id;
+        this.name = name;
+        this.login = login;
+        this.password = password;
+        this.role = role;
+        this.createdAt = createdAt;
+        this.deletedAt = deletedAt;
+    }
+
+    public User() {
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getLogin() {
+        return login;
+    }
+
+    public void setLogin(String login) {
+        this.login = login;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
