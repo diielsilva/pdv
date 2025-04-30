@@ -4,7 +4,6 @@ import com.todev.pdv.core.exceptions.ModelNotFoundException;
 import com.todev.pdv.core.models.Product;
 import com.todev.pdv.core.providers.contracts.ProductProvider;
 import com.todev.pdv.core.repositories.ProductRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -12,10 +11,13 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 @Component
-@RequiredArgsConstructor
 public class ProductProviderImpl implements ProductProvider {
     private final ProductRepository productRepository;
     private static final String ERROR_MESSAGE = "O produto: %s não foi encontrado!";
+
+    public ProductProviderImpl(ProductRepository productRepository) {
+        this.productRepository = productRepository;
+    }
 
     @Override
     public Product save(Product product) {
