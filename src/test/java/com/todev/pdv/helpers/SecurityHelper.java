@@ -4,7 +4,6 @@ import com.todev.pdv.core.models.User;
 import com.todev.pdv.core.repositories.UserRepository;
 import com.todev.pdv.security.dtos.LoginRequest;
 import com.todev.pdv.security.dtos.LoginResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,11 +12,16 @@ import org.springframework.stereotype.Component;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Component
-@RequiredArgsConstructor
 public class SecurityHelper {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final TestRestTemplate apiClient;
+
+    public SecurityHelper(UserRepository userRepository, PasswordEncoder passwordEncoder, TestRestTemplate apiClient) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.apiClient = apiClient;
+    }
 
     public HttpHeaders authenticate(LoginRequest requestBody) {
         var httpHeaders = new HttpHeaders();
