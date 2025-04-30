@@ -6,7 +6,6 @@ import com.todev.pdv.common.mappers.contracts.ModelMapper;
 import com.todev.pdv.core.exceptions.ConstraintConflictException;
 import com.todev.pdv.core.providers.contracts.ProductProvider;
 import com.todev.pdv.core.services.contracts.ProductService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,11 +15,15 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 @Service
-@RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
     private final ProductProvider productProvider;
     private final ModelMapper modelMapper;
     private static final String ZONE_ID = "America/Sao_Paulo";
+
+    public ProductServiceImpl(ProductProvider productProvider, ModelMapper modelMapper) {
+        this.productProvider = productProvider;
+        this.modelMapper = modelMapper;
+    }
 
     @Transactional
     @Override

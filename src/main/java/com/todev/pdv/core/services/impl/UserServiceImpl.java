@@ -9,7 +9,6 @@ import com.todev.pdv.core.exceptions.DependencyInUseException;
 import com.todev.pdv.core.exceptions.PermissionDeniedException;
 import com.todev.pdv.core.providers.contracts.UserProvider;
 import com.todev.pdv.core.services.contracts.UserService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,11 +18,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 @Service
-@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserProvider userProvider;
     private final PasswordEncoder BCryptEncoder;
     private final ModelMapper modelMapper;
+
+    public UserServiceImpl(UserProvider userProvider, PasswordEncoder BCryptEncoder, ModelMapper modelMapper) {
+        this.userProvider = userProvider;
+        this.BCryptEncoder = BCryptEncoder;
+        this.modelMapper = modelMapper;
+    }
 
     @Transactional
     @Override
