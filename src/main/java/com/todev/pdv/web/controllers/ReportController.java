@@ -2,16 +2,18 @@ package com.todev.pdv.web.controllers;
 
 import com.todev.pdv.core.services.contracts.ReportService;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("reports")
-@RequiredArgsConstructor
 public class ReportController {
     private final ReportService reportService;
+
+    public ReportController(ReportService reportService) {
+        this.reportService = reportService;
+    }
 
     @GetMapping("sale/{saleId}")
     public void saleReport(@PathVariable Integer saleId, HttpServletResponse response) {

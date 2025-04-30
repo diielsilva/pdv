@@ -4,7 +4,6 @@ import com.todev.pdv.common.dtos.UserRequest;
 import com.todev.pdv.common.dtos.UserResponse;
 import com.todev.pdv.core.services.contracts.UserService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +15,12 @@ import static org.springframework.http.HttpStatus.*;
 
 @RestController
 @RequestMapping("users")
-@RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @PostMapping
