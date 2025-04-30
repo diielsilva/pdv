@@ -13,7 +13,6 @@ import com.todev.pdv.core.providers.contracts.SaleItemProvider;
 import com.todev.pdv.core.providers.contracts.SaleProvider;
 import com.todev.pdv.core.providers.contracts.UserProvider;
 import com.todev.pdv.core.services.contracts.SaleService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,7 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class SaleServiceImpl implements SaleService {
     private final SaleProvider saleProvider;
     private final SaleItemProvider saleItemProvider;
@@ -33,6 +31,14 @@ public class SaleServiceImpl implements SaleService {
     private final UserProvider userProvider;
     private final ModelMapper modelMapper;
     private static final String ZONE_ID = "America/Sao_Paulo";
+
+    public SaleServiceImpl(SaleProvider saleProvider, SaleItemProvider saleItemProvider, ProductProvider productProvider, UserProvider userProvider, ModelMapper modelMapper) {
+        this.saleProvider = saleProvider;
+        this.saleItemProvider = saleItemProvider;
+        this.productProvider = productProvider;
+        this.userProvider = userProvider;
+        this.modelMapper = modelMapper;
+    }
 
     @Transactional
     @Override

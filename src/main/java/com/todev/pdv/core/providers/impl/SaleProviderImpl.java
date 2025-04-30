@@ -4,7 +4,6 @@ import com.todev.pdv.core.exceptions.ModelNotFoundException;
 import com.todev.pdv.core.models.Sale;
 import com.todev.pdv.core.providers.contracts.SaleProvider;
 import com.todev.pdv.core.repositories.SaleRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -13,10 +12,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
-@RequiredArgsConstructor
 public class SaleProviderImpl implements SaleProvider {
     private final SaleRepository saleRepository;
     private static final String ERROR_MESSAGE = "A venda: %s não foi encontrada!";
+
+    public SaleProviderImpl(SaleRepository saleRepository) {
+        this.saleRepository = saleRepository;
+    }
 
     @Override
     public Sale save(Sale sale) {

@@ -5,7 +5,6 @@ import com.todev.pdv.common.dtos.SaleRequest;
 import com.todev.pdv.common.dtos.SaleResponse;
 import com.todev.pdv.core.services.contracts.SaleService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +19,12 @@ import static org.springframework.http.HttpStatus.*;
 
 @RestController
 @RequestMapping("sales")
-@RequiredArgsConstructor
 public class SaleController {
     private final SaleService saleService;
+
+    public SaleController(SaleService saleService) {
+        this.saleService = saleService;
+    }
 
     @PostMapping
     public ResponseEntity<SaleResponse> save(Authentication authentication, @RequestBody @Valid SaleRequest requestDTO) {

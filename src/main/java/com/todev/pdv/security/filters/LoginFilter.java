@@ -10,7 +10,6 @@ import com.todev.pdv.security.utils.contracts.ResponseUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -21,12 +20,18 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Set;
 
-@RequiredArgsConstructor
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     private final AuthenticationManager authManager;
     private final TokenService tokenService;
     private final ResponseUtil responseUtil;
     private final ObjectMapper objectMapper;
+
+    public LoginFilter(AuthenticationManager authManager, TokenService tokenService, ResponseUtil responseUtil, ObjectMapper objectMapper) {
+        this.authManager = authManager;
+        this.tokenService = tokenService;
+        this.responseUtil = responseUtil;
+        this.objectMapper = objectMapper;
+    }
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)

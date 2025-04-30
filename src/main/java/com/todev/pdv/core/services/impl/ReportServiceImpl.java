@@ -1,11 +1,6 @@
 package com.todev.pdv.core.services.impl;
 
 import com.lowagie.text.*;
-import com.lowagie.text.Document;
-import com.lowagie.text.FontFactory;
-import com.lowagie.text.PageSize;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.Phrase;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
@@ -18,7 +13,6 @@ import com.todev.pdv.core.providers.contracts.SaleProvider;
 import com.todev.pdv.core.providers.contracts.UserProvider;
 import com.todev.pdv.core.services.contracts.ReportService;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -30,12 +24,18 @@ import java.util.List;
 import static com.lowagie.text.Element.ALIGN_CENTER;
 
 @Service
-@RequiredArgsConstructor
 public class ReportServiceImpl implements ReportService {
     private final SaleProvider saleProvider;
     private final SaleItemProvider saleItemProvider;
     private final ProductProvider productProvider;
     private final UserProvider userProvider;
+
+    public ReportServiceImpl(SaleProvider saleProvider, SaleItemProvider saleItemProvider, ProductProvider productProvider, UserProvider userProvider) {
+        this.saleProvider = saleProvider;
+        this.saleItemProvider = saleItemProvider;
+        this.productProvider = productProvider;
+        this.userProvider = userProvider;
+    }
 
     @Override
     public void saleReport(Integer id, HttpServletResponse response) {

@@ -4,7 +4,6 @@ import com.todev.pdv.core.exceptions.ModelNotFoundException;
 import com.todev.pdv.core.models.User;
 import com.todev.pdv.core.providers.contracts.UserProvider;
 import com.todev.pdv.core.repositories.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -12,10 +11,13 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 @Component
-@RequiredArgsConstructor
 public class UserProviderImpl implements UserProvider {
     private final UserRepository userRepository;
     private static final String ERROR_MESSAGE = "O usuário: %s não foi encontrado!";
+
+    public UserProviderImpl(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @Override
     public User save(User user) {

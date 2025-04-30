@@ -4,7 +4,6 @@ import com.todev.pdv.common.dtos.ProductRequest;
 import com.todev.pdv.common.dtos.ProductResponse;
 import com.todev.pdv.core.services.contracts.ProductService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -15,9 +14,12 @@ import static org.springframework.http.HttpStatus.*;
 
 @RestController
 @RequestMapping("products")
-@RequiredArgsConstructor
 public class ProductController {
     private final ProductService productService;
+
+    public ProductController(ProductService productService) {
+        this.productService = productService;
+    }
 
     @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @PostMapping
