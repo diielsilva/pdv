@@ -44,6 +44,8 @@ CREATE TABLE IF NOT EXISTS sales_items (
 CREATE TABLE IF NOT EXISTS online_sales (
     sale_id INTEGER PRIMARY KEY,
     platform VARCHAR(100) NOT NULL,
+    updated_at DATETIME NOT NULL,
+    deleted_at DATETIME,
     FOREIGN KEY (sale_id) REFERENCES sales(id)
 );
 
@@ -51,5 +53,7 @@ CREATE TABLE IF NOT EXISTS delivery_online_sales (
     online_sale_id INTEGER PRIMARY KEY,
     platform VARCHAR(100) NOT NULL,
     price DOUBLE(10, 2) NOT NULL,
+    updated_at DATETIME NOT NULL,
+    deleted_at DATETIME,
     FOREIGN KEY (online_sale_id) REFERENCES online_sales(sale_id)
 );
