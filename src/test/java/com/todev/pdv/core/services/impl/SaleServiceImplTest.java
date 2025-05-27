@@ -5,12 +5,16 @@ import com.todev.pdv.common.dtos.SaleRequest;
 import com.todev.pdv.common.mappers.contracts.ModelMapper;
 import com.todev.pdv.core.exceptions.DuplicatedItemException;
 import com.todev.pdv.core.exceptions.NotEnoughStockException;
+import com.todev.pdv.core.models.OnlineSale;
+import com.todev.pdv.core.models.OnlineSaleDelivery;
 import com.todev.pdv.core.models.Sale;
 import com.todev.pdv.core.models.SaleItem;
 import com.todev.pdv.core.providers.contracts.ProductProvider;
 import com.todev.pdv.core.providers.contracts.SaleItemProvider;
 import com.todev.pdv.core.providers.contracts.SaleProvider;
 import com.todev.pdv.core.providers.contracts.UserProvider;
+import com.todev.pdv.core.repositories.OnlineSaleDeliveryRepository;
+import com.todev.pdv.core.repositories.OnlineSaleRepository;
 import com.todev.pdv.factories.ProductFactory;
 import com.todev.pdv.factories.SaleFactory;
 import com.todev.pdv.factories.SaleItemFactory;
@@ -51,6 +55,12 @@ class SaleServiceImplTest {
 
     @Mock
     private ModelMapper modelMapper;
+
+    @Mock
+    private OnlineSaleRepository onlineSaleRepository;
+
+    @Mock
+    private OnlineSaleDeliveryRepository deliveryRepository;
 
     @BeforeEach
     void setUpSaleProvider() {
@@ -118,6 +128,16 @@ class SaleServiceImplTest {
                 .thenReturn(SaleFactory.getResponseDTO());
     }
 
+    void setUpOnlineSaleRepository() {
+        when(onlineSaleRepository.save(any(OnlineSale.class)))
+                .thenReturn(new OnlineSale());
+    }
+
+    void setUpOnlineSaleDeliveryRepository() {
+        when(deliveryRepository.save(any(OnlineSaleDelivery.class)))
+                .thenReturn(new OnlineSaleDelivery());
+    }
+
     @Test
     void save_SaleShouldBeSaved_WhenValidSaleWasReceived() {
         assertDoesNotThrow(() -> saleService.save("seller", SaleFactory.getRequestDTO(1)));
@@ -137,6 +157,16 @@ class SaleServiceImplTest {
                 .thenReturn(item);
         var sale = SaleFactory.getSaleWithNotEnoughStockItems(1);
         assertThrows(NotEnoughStockException.class, () -> saleService.save("seller", sale));
+    }
+
+    @Test
+    void save_OnlineSaleWithoutDeliveryShouldBeSaved_WhenValidOnlineSaleWithoutDeliveryWasReceived() {
+        assertDoesNotThrow(() -> saleService.saveOnline("seller", false, SaleFactory.getRequestDTO(1)));
+    }
+
+    @Test
+    void save_OnlineSaleWithDeliveryShouldBeSaved_WhenValidOnlineSaleWithDeliveryWasReceived() {
+        assertDoesNotThrow(() -> saleService.saveOnline("seller", true, SaleFactory.getRequestDTO(1)));
     }
 
     @Test
