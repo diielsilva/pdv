@@ -104,22 +104,6 @@ public class ModelMapperImpl implements ModelMapper {
     }
 
     @Override
-    public SaleReportResponse toDTO(Integer discount, Double total, Double totalWithDiscount, List<SaleItem> items, List<Product> products) {
-        var responseItems = new ArrayList<SaleItemResponse>();
-
-        for (int i = 0; i < items.size(); i++) {
-            responseItems.add(toDTO(items.get(i), products.get(i)));
-        }
-
-        return new SaleReportResponse(
-                discount,
-                total,
-                totalWithDiscount,
-                responseItems
-        );
-    }
-
-    @Override
     public SaleItem toModel(SaleItemRequest saleItemRequest) {
         return new SaleItem(
                 null,
