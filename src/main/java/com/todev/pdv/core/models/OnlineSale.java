@@ -12,13 +12,13 @@ public class OnlineSale {
     private Integer saleId;
     private OnlineSalePlatform platform;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
 
-    public OnlineSale(Integer saleId, OnlineSalePlatform platform, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public OnlineSale(Integer saleId, OnlineSalePlatform platform, LocalDateTime createdAt, LocalDateTime deletedAt) {
         this.saleId = saleId;
         this.platform = platform;
         this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
+        this.deletedAt = deletedAt;
     }
 
     public OnlineSale() {
@@ -48,11 +48,11 @@ public class OnlineSale {
         this.createdAt = createdAt;
     }
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
     }
 }

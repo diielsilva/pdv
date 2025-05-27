@@ -32,6 +32,16 @@ public class SaleController {
         return new ResponseEntity<>(sale, CREATED);
     }
 
+    @PostMapping("online")
+    public ResponseEntity<SaleResponse> createOnline(
+            Authentication authentication,
+            @RequestParam boolean hasDelivery,
+            @RequestBody @Valid SaleRequest body
+    ) {
+        SaleResponse sale = saleService.saveOnline(authentication.getName(), hasDelivery, body);
+        return new ResponseEntity<>(sale, CREATED);
+    }
+
     @GetMapping("active")
     public ResponseEntity<Page<SaleResponse>> findActive(Pageable pageable) {
         var sales = saleService.findActive(pageable);

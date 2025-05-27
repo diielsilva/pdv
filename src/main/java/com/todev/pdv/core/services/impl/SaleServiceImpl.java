@@ -8,10 +8,7 @@ import com.todev.pdv.core.enums.DeliveryPlatform;
 import com.todev.pdv.core.enums.OnlineSalePlatform;
 import com.todev.pdv.core.exceptions.DuplicatedItemException;
 import com.todev.pdv.core.exceptions.NotEnoughStockException;
-import com.todev.pdv.core.models.OnlineSale;
-import com.todev.pdv.core.models.OnlineSaleDelivery;
-import com.todev.pdv.core.models.Product;
-import com.todev.pdv.core.models.SaleItem;
+import com.todev.pdv.core.models.*;
 import com.todev.pdv.core.providers.contracts.ProductProvider;
 import com.todev.pdv.core.providers.contracts.SaleItemProvider;
 import com.todev.pdv.core.providers.contracts.SaleProvider;
@@ -21,6 +18,7 @@ import com.todev.pdv.core.repositories.OnlineSaleRepository;
 import com.todev.pdv.core.services.contracts.SaleService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,9 +37,10 @@ public class SaleServiceImpl implements SaleService {
     private final ModelMapper modelMapper;
     private final OnlineSaleRepository onlineSaleRepository;
     private final OnlineSaleDeliveryRepository deliveryRepository;
+    private final JdbcAggregateTemplate template;
     private static final String ZONE_ID = "America/Sao_Paulo";
 
-    public SaleServiceImpl(SaleProvider saleProvider, SaleItemProvider saleItemProvider, ProductProvider productProvider, UserProvider userProvider, ModelMapper modelMapper, OnlineSaleRepository onlineSaleRepository, OnlineSaleDeliveryRepository deliveryRepository) {
+    public SaleServiceImpl(SaleProvider saleProvider, SaleItemProvider saleItemProvider, ProductProvider productProvider, UserProvider userProvider, ModelMapper modelMapper, OnlineSaleRepository onlineSaleRepository, OnlineSaleDeliveryRepository deliveryRepository, JdbcAggregateTemplate template) {
         this.saleProvider = saleProvider;
         this.saleItemProvider = saleItemProvider;
         this.productProvider = productProvider;
@@ -49,6 +48,7 @@ public class SaleServiceImpl implements SaleService {
         this.modelMapper = modelMapper;
         this.onlineSaleRepository = onlineSaleRepository;
         this.deliveryRepository = deliveryRepository;
+        this.template = template;
     }
 
     @Override
@@ -91,18 +91,19 @@ public class SaleServiceImpl implements SaleService {
 
     @Override
     public SaleResponse saveOnline(String onlineUser, boolean hasDelivery, SaleRequest body) {
-        SaleResponse sale = save(onlineUser, body);
-        OnlineSale onlineSale = new OnlineSale(sale.id(), OnlineSalePlatform.WHATSAPP, sale.createdAt(), sale.deletedAt());
-        onlineSaleRepository.save(onlineSale) ;
+        SaleResponse response = save(onlineUser, body);
+        Sale sale = saleProvider.findActiveById(response.id());
+        OnlineSale onlineSale = new OnlineSale(sale.getId(), OnlineSalePlatform.WHATSAPP, sale.getCreatedAt(), sale.getDeletedAt());
+        template.insert(onlineSale);
 
-        if(hasDelivery) {
+        if (hasDelivery) {
             OnlineSaleDelivery delivery =
                     new OnlineSaleDelivery(onlineSale.getSaleId(), DeliveryPlatform.DELIVERY_99,
-                            6D, onlineSale.getCreatedAt(), onlineSale.getUpdatedAt());
-            deliveryRepository.save(delivery);
+                            6D, onlineSale.getCreatedAt(), onlineSale.getDeletedAt());
+            template.insert(delivery);
         }
 
-        return sale;
+        return response;
     }
 
     @Override

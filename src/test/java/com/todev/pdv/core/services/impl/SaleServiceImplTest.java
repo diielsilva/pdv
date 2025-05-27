@@ -27,6 +27,7 @@ import org.mockito.Mock;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.LocalDateTime;
@@ -61,6 +62,9 @@ class SaleServiceImplTest {
 
     @Mock
     private OnlineSaleDeliveryRepository deliveryRepository;
+
+    @Mock
+    private JdbcAggregateTemplate template;
 
     @BeforeEach
     void setUpSaleProvider() {
