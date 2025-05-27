@@ -11,12 +11,14 @@ public class OnlineSaleDelivery {
     @Id
     private Integer onlineSaleId;
     private DeliveryPlatform platform;
+    private Double price;
     private LocalDateTime createdAt;
     private LocalDateTime deletedAt;
 
-    public OnlineSaleDelivery(Integer onlineSaleId, DeliveryPlatform platform, LocalDateTime createdAt, LocalDateTime deletedAt) {
+    public OnlineSaleDelivery(Integer onlineSaleId, DeliveryPlatform platform, Double price, LocalDateTime createdAt, LocalDateTime deletedAt) {
         this.onlineSaleId = onlineSaleId;
         this.platform = platform;
+        this.price = price;
         this.createdAt = createdAt;
         this.deletedAt = deletedAt;
     }
@@ -38,6 +40,14 @@ public class OnlineSaleDelivery {
 
     public void setPlatform(DeliveryPlatform platform) {
         this.platform = platform;
+    }
+
+    public Double getPrice() {
+        return price;
+    }
+
+    public void setPrice(Double price) {
+        this.price = price;
     }
 
     public LocalDateTime getCreatedAt() {
