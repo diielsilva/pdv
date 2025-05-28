@@ -11,6 +11,8 @@ import com.todev.pdv.core.providers.contracts.ProductProvider;
 import com.todev.pdv.core.providers.contracts.SaleItemProvider;
 import com.todev.pdv.core.providers.contracts.SaleProvider;
 import com.todev.pdv.core.providers.contracts.UserProvider;
+import com.todev.pdv.core.repositories.OnlineSaleDeliveryRepository;
+import com.todev.pdv.core.repositories.OnlineSaleRepository;
 import com.todev.pdv.core.services.contracts.ReportService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.PageRequest;
@@ -29,12 +31,16 @@ public class ReportServiceImpl implements ReportService {
     private final SaleItemProvider saleItemProvider;
     private final ProductProvider productProvider;
     private final UserProvider userProvider;
+    private final OnlineSaleRepository onlineSaleRepository;
+    private final OnlineSaleDeliveryRepository deliveryRepository;
 
-    public ReportServiceImpl(SaleProvider saleProvider, SaleItemProvider saleItemProvider, ProductProvider productProvider, UserProvider userProvider) {
+    public ReportServiceImpl(SaleProvider saleProvider, SaleItemProvider saleItemProvider, ProductProvider productProvider, UserProvider userProvider, OnlineSaleRepository onlineSaleRepository, OnlineSaleDeliveryRepository deliveryRepository) {
         this.saleProvider = saleProvider;
         this.saleItemProvider = saleItemProvider;
         this.productProvider = productProvider;
         this.userProvider = userProvider;
+        this.onlineSaleRepository = onlineSaleRepository;
+        this.deliveryRepository = deliveryRepository;
     }
 
     @Override
@@ -112,20 +118,28 @@ public class ReportServiceImpl implements ReportService {
 
             reportHeader.forEach(report::add);
 
-            var table = createTable(4, List.of("VEND", "TOTAL", "PAG", "DATA"));
+            var table = createTable(6, List.of("VEND.", "TOTAL", "ON.", "ENT.", "PAG.", "DATA"));
 
             for (Sale sale : sales) {
                 var total = sale.getTotal();
                 var discount = (double) sale.getDiscount() / 100 * sale.getTotal();
                 var user = userProvider.findById(sale.getUserId());
+                var isAnOnlineSale = onlineSaleRepository.findById(sale.getId()).isPresent();
+                var hasDelivery = false;
+
+                if (isAnOnlineSale) {
+                    hasDelivery = deliveryRepository.findById(sale.getId()).isPresent();
+                }
 
                 total = sale.getTotal() - discount;
 
                 totalOfSales += total;
 
                 var tableCells = createTableCells(List.of(
-                        user.getName(),
+                        user.getName().split(" ")[0],
                         String.format("R$ %.2f", total),
+                        isAnOnlineSale ? "SIM" : "NÃO",
+                        hasDelivery ? "SIM" : "NÃO",
                         convertPaymentMethod(sale.getPaymentMethod()),
                         sale.getCreatedAt().format(DateTimeFormatter.ofPattern("dd/MM/yy"))
                 ));
