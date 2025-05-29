@@ -12,6 +12,8 @@ import java.util.List;
 public interface SaleService {
     SaleResponse save(String onlineUser, SaleRequest requestDTO);
 
+    SaleResponse saveOnline(String onlineUser, boolean hasDelivery, SaleRequest body);
+
     Page<SaleResponse> findActive(Pageable pageable);
 
     Page<SaleResponse> findInactive(Pageable pageable);

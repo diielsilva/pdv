@@ -16,7 +16,7 @@ public class PaymentMethodValidator implements ConstraintValidator<PaymentMethod
         if (paymentMethod == null) return false;
 
         return switch (paymentMethod) {
-            case "CARD", "CASH", "PIX" -> true;
+            case "CARD", "CASH", "PIX", "LINK" -> true;
             default -> false;
         };
     }

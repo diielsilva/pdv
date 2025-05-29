@@ -1,13 +1,11 @@
 package com.todev.pdv.web.controllers;
 
 import com.todev.pdv.common.dtos.*;
+import com.todev.pdv.core.models.OnlineSale;
 import com.todev.pdv.core.models.Product;
 import com.todev.pdv.core.models.Sale;
 import com.todev.pdv.core.models.SaleItem;
-import com.todev.pdv.core.repositories.ProductRepository;
-import com.todev.pdv.core.repositories.SaleItemRepository;
-import com.todev.pdv.core.repositories.SaleRepository;
-import com.todev.pdv.core.repositories.UserRepository;
+import com.todev.pdv.core.repositories.*;
 import com.todev.pdv.factories.*;
 import com.todev.pdv.helpers.SecurityHelper;
 import com.todev.pdv.wrappers.PageableResponse;
@@ -19,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -48,6 +47,12 @@ class SaleControllerTest {
     @Autowired
     private SecurityHelper securityHelper;
 
+    @Autowired
+    private OnlineSaleRepository onlineSaleRepository;
+
+    @Autowired
+    private OnlineSaleDeliveryRepository deliveryRepository;
+
     private Product product;
 
     private Sale sale;
@@ -65,9 +70,11 @@ class SaleControllerTest {
     @AfterEach
     void tearDown() {
         saleItemRepository.deleteAll();
+        deliveryRepository.deleteAll();
+        onlineSaleRepository.deleteAll();
         saleRepository.deleteAll();
-        productRepository.deleteAll();
         userRepository.deleteAll();
+        productRepository.deleteAll();
     }
 
     @Test
@@ -88,6 +95,56 @@ class SaleControllerTest {
             assertEquals(3501.8, httpResponse.getBody().total());
             assertTrue(productById.isPresent());
             assertEquals(8, productById.get().getAmount());
+        });
+    }
+
+    @Test
+    void save_OnlineSaleWithoutDeliveryShouldBeSaved() {
+        HttpHeaders requestHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        SaleRequest requestBody = SaleFactory.getRequestDTO(product.getId());
+        var httpResponse = apiClient.exchange(
+                "/sales/online?hasDelivery={hasDelivery}",
+                POST,
+                new HttpEntity<>(requestBody, requestHeaders),
+                SaleResponse.class,
+                false
+        );
+
+        Iterable<OnlineSale> onlineSales = onlineSaleRepository.findAll();
+
+        assertAll(() -> {
+            assertEquals(CREATED, httpResponse.getStatusCode());
+            assertNotNull(httpResponse.getBody());
+            onlineSales.forEach(onlineSale -> {
+                assertEquals(onlineSale.getSaleId(), httpResponse.getBody().id());
+            });
+            assertEquals(1L, onlineSaleRepository.count());
+            assertEquals(0L, deliveryRepository.count());
+        });
+    }
+
+    @Test
+    void save_OnlineSaleWithDeliveryShouldBeSaved() {
+        HttpHeaders requestHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
+        SaleRequest requestBody = SaleFactory.getRequestDTO(product.getId());
+        var httpResponse = apiClient.exchange(
+                "/sales/online?hasDelivery={hasDelivery}",
+                POST,
+                new HttpEntity<>(requestBody, requestHeaders),
+                SaleResponse.class,
+                true
+        );
+
+        Iterable<OnlineSale> onlineSales = onlineSaleRepository.findAll();
+
+        assertAll(() -> {
+            assertEquals(CREATED, httpResponse.getStatusCode());
+            assertNotNull(httpResponse.getBody());
+            onlineSales.forEach(onlineSale -> {
+                assertEquals(onlineSale.getSaleId(), httpResponse.getBody().id());
+            });
+            assertEquals(1L, onlineSaleRepository.count());
+            assertEquals(1L, deliveryRepository.count());
         });
     }
 

@@ -11,6 +11,8 @@ import com.todev.pdv.core.providers.contracts.ProductProvider;
 import com.todev.pdv.core.providers.contracts.SaleItemProvider;
 import com.todev.pdv.core.providers.contracts.SaleProvider;
 import com.todev.pdv.core.providers.contracts.UserProvider;
+import com.todev.pdv.core.repositories.OnlineSaleDeliveryRepository;
+import com.todev.pdv.core.repositories.OnlineSaleRepository;
 import com.todev.pdv.core.services.contracts.ReportService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.PageRequest;
@@ -29,12 +31,16 @@ public class ReportServiceImpl implements ReportService {
     private final SaleItemProvider saleItemProvider;
     private final ProductProvider productProvider;
     private final UserProvider userProvider;
+    private final OnlineSaleRepository onlineSaleRepository;
+    private final OnlineSaleDeliveryRepository deliveryRepository;
 
-    public ReportServiceImpl(SaleProvider saleProvider, SaleItemProvider saleItemProvider, ProductProvider productProvider, UserProvider userProvider) {
+    public ReportServiceImpl(SaleProvider saleProvider, SaleItemProvider saleItemProvider, ProductProvider productProvider, UserProvider userProvider, OnlineSaleRepository onlineSaleRepository, OnlineSaleDeliveryRepository deliveryRepository) {
         this.saleProvider = saleProvider;
         this.saleItemProvider = saleItemProvider;
         this.productProvider = productProvider;
         this.userProvider = userProvider;
+        this.onlineSaleRepository = onlineSaleRepository;
+        this.deliveryRepository = deliveryRepository;
     }
 
     @Override
@@ -112,20 +118,28 @@ public class ReportServiceImpl implements ReportService {
 
             reportHeader.forEach(report::add);
 
-            var table = createTable(4, List.of("VEND", "TOTAL", "PAG", "DATA"));
+            var table = createTable(6, List.of("VEND.", "TOTAL", "ON.", "ENT.", "PAG.", "DATA"));
 
             for (Sale sale : sales) {
                 var total = sale.getTotal();
                 var discount = (double) sale.getDiscount() / 100 * sale.getTotal();
                 var user = userProvider.findById(sale.getUserId());
+                var isAnOnlineSale = onlineSaleRepository.findById(sale.getId()).isPresent();
+                var hasDelivery = false;
+
+                if (isAnOnlineSale) {
+                    hasDelivery = deliveryRepository.findById(sale.getId()).isPresent();
+                }
 
                 total = sale.getTotal() - discount;
 
                 totalOfSales += total;
 
                 var tableCells = createTableCells(List.of(
-                        user.getName(),
+                        user.getName().split(" ")[0],
                         String.format("R$ %.2f", total),
+                        isAnOnlineSale ? "SIM" : "NÃO",
+                        hasDelivery ? "SIM" : "NÃO",
                         convertPaymentMethod(sale.getPaymentMethod()),
                         sale.getCreatedAt().format(DateTimeFormatter.ofPattern("dd/MM/yy"))
                 ));
@@ -238,16 +252,16 @@ public class ReportServiceImpl implements ReportService {
 
     private List<Paragraph> createReportHeader(String titleContent, List<String> subtitles) {
         List<Paragraph> paragraphs = new ArrayList<>();
-        var title = createParagraph(titleContent, 22);
+        var title = createParagraph(titleContent, 11);
         title.getFont().setStyle("bold");
         paragraphs.add(title);
-        subtitles.forEach(subtitle -> paragraphs.add(createParagraph(subtitle, 16)));
+        subtitles.forEach(subtitle -> paragraphs.add(createParagraph(subtitle, 9)));
         return paragraphs;
     }
 
     private List<Paragraph> createReportFooter(List<String> contents) {
         List<Paragraph> paragraphs = new ArrayList<>();
-        contents.forEach(content -> paragraphs.add(createParagraph(content, 16)));
+        contents.forEach(content -> paragraphs.add(createParagraph(content, 9)));
         return paragraphs;
     }
 
@@ -264,10 +278,12 @@ public class ReportServiceImpl implements ReportService {
         table.setSpacingBefore(15);
         table.setSpacingAfter(15);
         headers.forEach(title -> {
+            var phrase = new Phrase(title);
+            phrase.getFont().setSize(7);
             var header = new PdfPCell();
             header.setBorder(0);
-            header.setPadding(6);
-            header.setPhrase(new Phrase(title));
+            header.setPadding(2);
+            header.setPhrase(phrase);
             header.getPhrase().getFont().setStyle("bold");
             table.addCell(header);
         });
@@ -277,10 +293,12 @@ public class ReportServiceImpl implements ReportService {
     private List<PdfPCell> createTableCells(List<String> contents) {
         List<PdfPCell> cells = new ArrayList<>();
         contents.forEach(content -> {
+            var phrase = new Phrase(content);
+            phrase.getFont().setSize(7);
             var cell = new PdfPCell();
             cell.setBorder(0);
-            cell.setPadding(6);
-            cell.setPhrase(new Phrase(content));
+            cell.setPadding(2);
+            cell.setPhrase(phrase);
             cells.add(cell);
         });
         return cells;
@@ -291,6 +309,7 @@ public class ReportServiceImpl implements ReportService {
             case PIX -> "PIX";
             case CARD -> "CARTÃO";
             case CASH -> "DINHEIRO";
+            case LINK -> "LINK";
         };
     }
 }

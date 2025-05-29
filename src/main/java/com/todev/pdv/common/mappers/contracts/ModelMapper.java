@@ -23,8 +23,6 @@ public interface ModelMapper {
 
     SaleDetailsResponse toDTO(User user, List<SaleItem> items, List<Product> products);
 
-    SaleReportResponse toDTO(Integer discount, Double total, Double totalWithDiscount, List<SaleItem> items, List<Product> products);
-
     SaleItem toModel(SaleItemRequest saleItemRequest);
 
     SaleItemResponse toDTO(SaleItem item, Product product);
