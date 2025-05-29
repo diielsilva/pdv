@@ -252,16 +252,16 @@ public class ReportServiceImpl implements ReportService {
 
     private List<Paragraph> createReportHeader(String titleContent, List<String> subtitles) {
         List<Paragraph> paragraphs = new ArrayList<>();
-        var title = createParagraph(titleContent, 22);
+        var title = createParagraph(titleContent, 11);
         title.getFont().setStyle("bold");
         paragraphs.add(title);
-        subtitles.forEach(subtitle -> paragraphs.add(createParagraph(subtitle, 16)));
+        subtitles.forEach(subtitle -> paragraphs.add(createParagraph(subtitle, 9)));
         return paragraphs;
     }
 
     private List<Paragraph> createReportFooter(List<String> contents) {
         List<Paragraph> paragraphs = new ArrayList<>();
-        contents.forEach(content -> paragraphs.add(createParagraph(content, 16)));
+        contents.forEach(content -> paragraphs.add(createParagraph(content, 9)));
         return paragraphs;
     }
 
@@ -278,10 +278,12 @@ public class ReportServiceImpl implements ReportService {
         table.setSpacingBefore(15);
         table.setSpacingAfter(15);
         headers.forEach(title -> {
+            var phrase = new Phrase(title);
+            phrase.getFont().setSize(7);
             var header = new PdfPCell();
             header.setBorder(0);
-            header.setPadding(6);
-            header.setPhrase(new Phrase(title));
+            header.setPadding(2);
+            header.setPhrase(phrase);
             header.getPhrase().getFont().setStyle("bold");
             table.addCell(header);
         });
@@ -291,10 +293,12 @@ public class ReportServiceImpl implements ReportService {
     private List<PdfPCell> createTableCells(List<String> contents) {
         List<PdfPCell> cells = new ArrayList<>();
         contents.forEach(content -> {
+            var phrase = new Phrase(content);
+            phrase.getFont().setSize(7);
             var cell = new PdfPCell();
             cell.setBorder(0);
-            cell.setPadding(6);
-            cell.setPhrase(new Phrase(content));
+            cell.setPadding(2);
+            cell.setPhrase(phrase);
             cells.add(cell);
         });
         return cells;
@@ -305,6 +309,7 @@ public class ReportServiceImpl implements ReportService {
             case PIX -> "PIX";
             case CARD -> "CARTÃO";
             case CASH -> "DINHEIRO";
+            case LINK -> "LINK";
         };
     }
 }
