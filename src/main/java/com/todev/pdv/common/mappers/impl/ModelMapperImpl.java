@@ -8,6 +8,7 @@ import com.todev.pdv.core.models.Product;
 import com.todev.pdv.core.models.Sale;
 import com.todev.pdv.core.models.SaleItem;
 import com.todev.pdv.core.models.User;
+import com.todev.pdv.core.models.user.UserBuilder;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -17,16 +18,15 @@ import java.util.List;
 public class ModelMapperImpl implements ModelMapper {
 
     @Override
-    public User toModel(UserRequest userRequest) {
-        return new User(
-                null,
-                userRequest.name(),
-                userRequest.login(),
-                userRequest.password(),
-                Role.valueOf(userRequest.role()),
-                null,
-                null
-        );
+    public User toModel(UserRequest body) {
+        return new UserBuilder()
+                .builder()
+                .withName(body.name())
+                .withLogin(body.login())
+                .withPassword(body.password())
+                .withRole(Role.valueOf(body.role()))
+                .build();
+
     }
 
     @Override
