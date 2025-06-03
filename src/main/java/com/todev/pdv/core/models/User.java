@@ -22,19 +22,6 @@ public class User implements UserDetails {
     private LocalDateTime createdAt;
     private LocalDateTime deletedAt;
 
-    public User(Integer id, String name, String login, String password, Role role, LocalDateTime createdAt, LocalDateTime deletedAt) {
-        this.id = id;
-        this.name = name;
-        this.login = login;
-        this.password = password;
-        this.role = role;
-        this.createdAt = createdAt;
-        this.deletedAt = deletedAt;
-    }
-
-    public User() {
-    }
-
     public Integer getId() {
         return id;
     }
@@ -98,7 +85,7 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        return login;
+        return getLogin();
     }
 
     @Override
