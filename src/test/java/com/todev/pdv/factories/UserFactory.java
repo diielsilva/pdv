@@ -4,6 +4,7 @@ import com.todev.pdv.common.dtos.UserRequest;
 import com.todev.pdv.common.dtos.UserResponse;
 import com.todev.pdv.core.enums.Role;
 import com.todev.pdv.core.models.User;
+import com.todev.pdv.core.models.user.UserBuilder;
 
 import java.time.LocalDateTime;
 
@@ -13,135 +14,134 @@ public final class UserFactory {
     }
 
     public static User getAdmin() {
-        return new User(
-                null,
-                "Admin",
-                "admin",
-                "12345",
-                Role.ADMIN,
-                LocalDateTime.now(),
-                null
-        );
+        return new UserBuilder()
+                .builder()
+                .withName("Admin")
+                .withLogin("admin")
+                .withPassword("12345")
+                .withRole(Role.ADMIN)
+                .createdAt(LocalDateTime.now())
+                .build();
     }
 
     public static User getManager() {
-        return new User(
-                null,
-                "Manager",
-                "manager",
-                "12345",
-                Role.MANAGER,
-                LocalDateTime.now(),
-                null
-        );
+        return new UserBuilder()
+                .builder()
+                .withName("Manager")
+                .withLogin("manager")
+                .withPassword("12345")
+                .withRole(Role.MANAGER)
+                .createdAt(LocalDateTime.now())
+                .build();
     }
 
     public static User getSeller() {
-        return new User(
-                null,
-                "Seller",
-                "seller",
-                "12345",
-                Role.SELLER,
-                LocalDateTime.now(),
-                null
-        );
+        return new UserBuilder()
+                .builder()
+                .withName("Seller")
+                .withLogin("seller")
+                .withPassword("12345")
+                .withRole(Role.SELLER)
+                .createdAt(LocalDateTime.now())
+                .build();
     }
 
     public static User getInactiveAdmin() {
-        return new User(
-                null,
-                "Admin",
-                "admin",
-                "12345",
-                Role.ADMIN,
-                LocalDateTime.now(),
-                LocalDateTime.now()
-        );
+        return new UserBuilder()
+                .builder()
+                .withName("Admin")
+                .withLogin("admin")
+                .withPassword("12345")
+                .withRole(Role.ADMIN)
+                .createdAt(LocalDateTime.now())
+                .deletedAt(LocalDateTime.now())
+                .build();
     }
 
     public static User getInactiveManager() {
-        return new User(
-                null,
-                "Manager",
-                "manager",
-                "12345",
-                Role.MANAGER,
-                LocalDateTime.now(),
-                LocalDateTime.now()
-        );
+        return new UserBuilder()
+                .builder()
+                .withName("Manager")
+                .withLogin("manager")
+                .withPassword("12345")
+                .withRole(Role.MANAGER)
+                .createdAt(LocalDateTime.now())
+                .deletedAt(LocalDateTime.now())
+                .build();
     }
 
     public static User getInactiveSeller() {
-        return new User(
-                null,
-                "Seller",
-                "seller",
-                "12345",
-                Role.SELLER,
-                LocalDateTime.now(),
-                LocalDateTime.now()
-        );
+        return new UserBuilder()
+                .builder()
+                .withName("Seller")
+                .withLogin("seller")
+                .withPassword("12345")
+                .withRole(Role.SELLER)
+                .createdAt(LocalDateTime.now())
+                .deletedAt(LocalDateTime.now())
+                .build();
     }
 
     public static User getSavedAdmin() {
-        return new User(
-                1,
-                "Admin",
-                "admin",
-                "12345",
-                Role.ADMIN,
-                LocalDateTime.now(),
-                null
-        );
+        return new UserBuilder()
+                .builder()
+                .withId(1)
+                .withName("Admin")
+                .withLogin("admin")
+                .withPassword("12345")
+                .withRole(Role.ADMIN)
+                .createdAt(LocalDateTime.now())
+                .build();
     }
 
     public static User getSavedManager() {
-        return new User(
-                1,
-                "Manager",
-                "manager",
-                "12345",
-                Role.MANAGER,
-                LocalDateTime.now(),
-                null
-        );
+        return new UserBuilder()
+                .builder()
+                .withId(1)
+                .withName("Manager")
+                .withLogin("manager")
+                .withPassword("12345")
+                .withRole(Role.MANAGER)
+                .createdAt(LocalDateTime.now())
+                .build();
     }
 
     public static User getSavedSeller() {
-        return new User(
-                1,
-                "Seller",
-                "seller",
-                "12345",
-                Role.SELLER,
-                LocalDateTime.now(),
-                null
-        );
+        return new UserBuilder()
+                .builder()
+                .withId(1)
+                .withName("Seller")
+                .withLogin("seller")
+                .withPassword("12345")
+                .withRole(Role.SELLER)
+                .createdAt(LocalDateTime.now())
+                .build();
     }
 
     public static User getInactiveSavedAdmin() {
-        return new User(
-                1,
-                "Admin",
-                "admin",
-                "12345",
-                Role.ADMIN,
-                LocalDateTime.now(),
-                LocalDateTime.now()
-        );
+        return new UserBuilder()
+                .builder()
+                .withId(1)
+                .withName("Admin")
+                .withLogin("admin")
+                .withPassword("12345")
+                .withRole(Role.ADMIN)
+                .createdAt(LocalDateTime.now())
+                .deletedAt(LocalDateTime.now())
+                .build();
     }
 
     public static User getInactiveSavedManager() {
-        return new User(
-                1,
-                "Manager",
-                "manager",
-                "12345",
-                Role.MANAGER,
-                LocalDateTime.now(),
-                LocalDateTime.now()
-        );
+        return new UserBuilder()
+                .builder()
+                .withId(1)
+                .withName("Manager")
+                .withLogin("manager")
+                .withPassword("12345")
+                .withRole(Role.MANAGER)
+                .createdAt(LocalDateTime.now())
+                .deletedAt(LocalDateTime.now())
+                .build();
     }
 
     public static UserRequest getManagerWithoutIssues() {
