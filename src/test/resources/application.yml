@@ -10,3 +10,5 @@ security:
   token:
     secret: HXs0nlG0D+ctw233d2vg3WiT
     expiration: 60000
+store:
+  location: vitoria

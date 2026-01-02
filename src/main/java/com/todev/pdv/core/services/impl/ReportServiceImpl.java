@@ -6,6 +6,8 @@ import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import com.todev.pdv.core.enums.PaymentMethod;
 import com.todev.pdv.core.exceptions.FileExportException;
+import com.todev.pdv.core.factories.store.StoreInformation;
+import com.todev.pdv.core.factories.store.StoreInformationFactory;
 import com.todev.pdv.core.models.Sale;
 import com.todev.pdv.core.providers.contracts.ProductProvider;
 import com.todev.pdv.core.providers.contracts.SaleItemProvider;
@@ -15,6 +17,7 @@ import com.todev.pdv.core.repositories.OnlineSaleDeliveryRepository;
 import com.todev.pdv.core.repositories.OnlineSaleRepository;
 import com.todev.pdv.core.services.contracts.ReportService;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +30,8 @@ import static com.lowagie.text.Element.ALIGN_CENTER;
 
 @Service
 public class ReportServiceImpl implements ReportService {
+    @Value("${store.location}")
+    private String storeLocation;
     private final SaleProvider saleProvider;
     private final SaleItemProvider saleItemProvider;
     private final ProductProvider productProvider;
@@ -52,11 +57,13 @@ public class ReportServiceImpl implements ReportService {
 
             report.open();
 
+            StoreInformation store = StoreInformationFactory.create(storeLocation);
+
             var reportHeader = createReportHeader("Minha Make", List.of(
-                    "Vitória Park Shopping",
-                    "Rua Henrique de Holanda - Nº 3000",
-                    "(81) 99451-3987",
-                    "CNPJ 35.699.902/000010-42"
+                    store.getMall(),
+                    store.getLocation(),
+                    store.getPhone(),
+                    store.getCnpj()
             ));
 
             reportHeader.forEach(report::add);

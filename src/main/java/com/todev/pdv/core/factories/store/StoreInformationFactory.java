@@ -4,8 +4,10 @@ public class StoreInformationFactory {
     private StoreInformationFactory() {
     }
 
-    public static StoreInformation getInstance(String currentLocation) {
-        if (currentLocation.equalsIgnoreCase("vitoria")) {
+    public static StoreInformation create(String location) {
+        String store = location == null ? "vitoria" : location;
+
+        if (store.equalsIgnoreCase("vitoria")) {
             return new VitoriaStoreInformation();
         }
 
