@@ -10,3 +10,5 @@ security:
   token:
     secret: ${TOKEN_KEY}
     expiration: ${TOKEN_EXPIRATION}
+store:
+  location: ${STORE_LOCATION}
