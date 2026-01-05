@@ -7,18 +7,16 @@ import org.springframework.data.relational.core.mapping.Table;
 import java.time.LocalDateTime;
 
 @Table(name = "online_sales")
-public class OnlineSale {
+public class OnlineSale extends BaseModel {
     @Id
     private Integer saleId;
     private OnlineSalePlatform platform;
-    private LocalDateTime createdAt;
-    private LocalDateTime deletedAt;
 
     public OnlineSale(Integer saleId, OnlineSalePlatform platform, LocalDateTime createdAt, LocalDateTime deletedAt) {
         this.saleId = saleId;
         this.platform = platform;
-        this.createdAt = createdAt;
-        this.deletedAt = deletedAt;
+        setCreatedAt(createdAt);
+        setDeletedAt(deletedAt);
     }
 
     public OnlineSale() {
@@ -38,21 +36,5 @@ public class OnlineSale {
 
     public void setPlatform(OnlineSalePlatform platform) {
         this.platform = platform;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getDeletedAt() {
-        return deletedAt;
-    }
-
-    public void setDeletedAt(LocalDateTime deletedAt) {
-        this.deletedAt = deletedAt;
     }
 }

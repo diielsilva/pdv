@@ -13,7 +13,7 @@ public abstract class BaseModel {
     }
 
     public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt.atZone(ZoneId.of(ZONE_ID)).toLocalDateTime();
+        this.createdAt = createdAt == null ? LocalDateTime.now().atZone(ZoneId.of(ZONE_ID)).toLocalDateTime() : createdAt.atZone(ZoneId.of(ZONE_ID)).toLocalDateTime();
     }
 
     public LocalDateTime getDeletedAt() {

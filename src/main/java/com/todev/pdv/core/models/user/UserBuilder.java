@@ -47,20 +47,12 @@ public final class UserBuilder {
     }
 
     public UserBuilder createdAt(LocalDateTime date) {
-        instance.setCreatedAt(
-                date
-                        .atZone(ZoneId.of(ZONE_ID))
-                        .toLocalDateTime()
-        );
+        instance.setCreatedAt(date);
         return this;
     }
 
     public UserBuilder deletedAt(LocalDateTime date) {
-        instance.setDeletedAt(
-                date
-                        .atZone(ZoneId.of(ZONE_ID))
-                        .toLocalDateTime()
-        );
+        instance.setDeletedAt(date);
         return this;
     }
 

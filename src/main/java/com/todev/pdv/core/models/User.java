@@ -7,20 +7,17 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
 @Table(name = "users")
-public class User implements UserDetails {
+public class User extends BaseModel implements UserDetails {
     @Id
     private Integer id;
     private String name;
     private String login;
     private String password;
     private Role role;
-    private LocalDateTime createdAt;
-    private LocalDateTime deletedAt;
 
     public Integer getId() {
         return id;
@@ -62,22 +59,6 @@ public class User implements UserDetails {
         this.role = role;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getDeletedAt() {
-        return deletedAt;
-    }
-
-    public void setDeletedAt(LocalDateTime deletedAt) {
-        this.deletedAt = deletedAt;
-    }
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));
@@ -109,6 +90,6 @@ public class User implements UserDetails {
     }
 
     private boolean isUserValid() {
-        return deletedAt == null;
+        return getDeletedAt() == null;
     }
 }

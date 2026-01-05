@@ -6,22 +6,20 @@ import org.springframework.data.relational.core.mapping.Table;
 import java.time.LocalDateTime;
 
 @Table(name = "products")
-public class Product {
+public class Product extends BaseModel {
     @Id
     private Integer id;
     private String description;
     private Integer amount;
     private Double price;
-    private LocalDateTime createdAt;
-    private LocalDateTime deletedAt;
 
     public Product(Integer id, String description, Integer amount, Double price, LocalDateTime createdAt, LocalDateTime deletedAt) {
         this.id = id;
         this.description = description;
         this.amount = amount;
         this.price = price;
-        this.createdAt = createdAt;
-        this.deletedAt = deletedAt;
+        setCreatedAt(createdAt);
+        setDeletedAt(deletedAt);
     }
 
     public Product() {
@@ -57,21 +55,5 @@ public class Product {
 
     public void setPrice(Double price) {
         this.price = price;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getDeletedAt() {
-        return deletedAt;
-    }
-
-    public void setDeletedAt(LocalDateTime deletedAt) {
-        this.deletedAt = deletedAt;
     }
 }
