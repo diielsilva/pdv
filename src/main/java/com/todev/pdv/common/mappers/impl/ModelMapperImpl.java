@@ -2,13 +2,13 @@ package com.todev.pdv.common.mappers.impl;
 
 import com.todev.pdv.common.dtos.*;
 import com.todev.pdv.common.mappers.contracts.ModelMapper;
+import com.todev.pdv.core.builders.UserBuilder;
 import com.todev.pdv.core.enums.PaymentMethod;
 import com.todev.pdv.core.enums.Role;
 import com.todev.pdv.core.models.Product;
 import com.todev.pdv.core.models.Sale;
 import com.todev.pdv.core.models.SaleItem;
 import com.todev.pdv.core.models.User;
-import com.todev.pdv.core.models.user.UserBuilder;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -21,10 +21,10 @@ public class ModelMapperImpl implements ModelMapper {
     public User toModel(UserRequest body) {
         return new UserBuilder()
                 .builder()
-                .withName(body.name())
-                .withLogin(body.login())
-                .withPassword(body.password())
-                .withRole(Role.valueOf(body.role()))
+                .name(body.name())
+                .login(body.login())
+                .password(body.password())
+                .role(Role.valueOf(body.role()))
                 .build();
 
     }
