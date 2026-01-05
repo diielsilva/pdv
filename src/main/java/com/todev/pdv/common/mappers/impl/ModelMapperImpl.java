@@ -2,6 +2,7 @@ package com.todev.pdv.common.mappers.impl;
 
 import com.todev.pdv.common.dtos.*;
 import com.todev.pdv.common.mappers.contracts.ModelMapper;
+import com.todev.pdv.core.builders.ProductBuilder;
 import com.todev.pdv.core.builders.UserBuilder;
 import com.todev.pdv.core.enums.PaymentMethod;
 import com.todev.pdv.core.enums.Role;
@@ -41,15 +42,13 @@ public class ModelMapperImpl implements ModelMapper {
     }
 
     @Override
-    public Product toModel(ProductRequest productRequest) {
-        return new Product(
-                null,
-                productRequest.description(),
-                productRequest.amount(),
-                productRequest.price(),
-                null,
-                null
-        );
+    public Product toModel(ProductRequest body) {
+        return new ProductBuilder()
+                .builder()
+                .description(body.description())
+                .amount(body.amount())
+                .price(body.price())
+                .build();
     }
 
     @Override
