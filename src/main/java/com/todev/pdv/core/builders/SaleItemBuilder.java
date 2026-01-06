@@ -36,6 +36,8 @@ public class SaleItemBuilder extends BaseBuilder<SaleItem> {
 
     @Override
     public SaleItem build() {
-        return instance;
+        SaleItem item = instance;
+        instance = new SaleItem();
+        return item;
     }
 }
