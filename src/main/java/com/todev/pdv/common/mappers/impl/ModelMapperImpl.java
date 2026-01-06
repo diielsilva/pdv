@@ -4,6 +4,7 @@ import com.todev.pdv.common.dtos.*;
 import com.todev.pdv.common.mappers.contracts.ModelMapper;
 import com.todev.pdv.core.builders.ProductBuilder;
 import com.todev.pdv.core.builders.SaleBuilder;
+import com.todev.pdv.core.builders.SaleItemBuilder;
 import com.todev.pdv.core.builders.UserBuilder;
 import com.todev.pdv.core.enums.PaymentMethod;
 import com.todev.pdv.core.enums.Role;
@@ -100,16 +101,12 @@ public class ModelMapperImpl implements ModelMapper {
     }
 
     @Override
-    public SaleItem toModel(SaleItemRequest saleItemRequest) {
-        return new SaleItem(
-                null,
-                null,
-                saleItemRequest.productId(),
-                saleItemRequest.amount(),
-                null,
-                null,
-                null
-        );
+    public SaleItem toModel(SaleItemRequest body) {
+        return new SaleItemBuilder()
+                .builder()
+                .productId(body.productId())
+                .amount(body.amount())
+                .build();
     }
 
     @Override
