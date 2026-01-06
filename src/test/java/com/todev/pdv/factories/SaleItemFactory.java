@@ -1,49 +1,54 @@
 package com.todev.pdv.factories;
 
 import com.todev.pdv.common.dtos.SaleItemRequest;
+import com.todev.pdv.core.builders.SaleItemBuilder;
 import com.todev.pdv.core.models.SaleItem;
 
 import java.time.LocalDateTime;
 
 public final class SaleItemFactory {
+    private static final int SALE_ID = 1;
+    private static final int PRODUCT_ID = 2;
+    private static final int AMOUNT = 1;
+    private static final double PRICE = 1750.9;
+    private static final LocalDateTime DATE = LocalDateTime.now();
 
     private SaleItemFactory() {
     }
 
     public static SaleItem getSaleItem() {
-        return new SaleItem(
-                null,
-                1,
-                1,
-                1,
-                1750.90,
-                LocalDateTime.now(),
-                null
-        );
+        return new SaleItemBuilder()
+                .builder()
+                .saleId(SALE_ID)
+                .productId(PRODUCT_ID)
+                .amount(AMOUNT)
+                .price(PRICE)
+                .createdAt(DATE)
+                .build();
     }
 
     public static SaleItem getInactiveSaleItem() {
-        return new SaleItem(
-                null,
-                1,
-                1,
-                1,
-                1750.90,
-                LocalDateTime.now(),
-                LocalDateTime.now()
-        );
+        return new SaleItemBuilder()
+                .builder()
+                .saleId(SALE_ID)
+                .productId(PRODUCT_ID)
+                .amount(AMOUNT)
+                .price(PRICE)
+                .createdAt(DATE)
+                .deletedAt(DATE)
+                .build();
     }
 
     public static SaleItem getSavedSaleItem() {
-        return new SaleItem(
-                1,
-                1,
-                1,
-                1,
-                1750.90,
-                LocalDateTime.now(),
-                null
-        );
+        return new SaleItemBuilder()
+                .builder()
+                .id(1)
+                .saleId(SALE_ID)
+                .productId(PRODUCT_ID)
+                .amount(AMOUNT)
+                .price(PRICE)
+                .createdAt(DATE)
+                .build();
     }
 
     public static SaleItemRequest getSaleItemWithoutIssues(Integer productId) {
@@ -66,6 +71,4 @@ public final class SaleItemFactory {
                 0
         );
     }
-
-
 }
