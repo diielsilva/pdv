@@ -1,17 +1,21 @@
 package com.todev.pdv.core.repositories;
 
-import com.todev.pdv.factories.UserFactory;
+import com.todev.pdv.core.builders.UserBuilder;
+import com.todev.pdv.core.models.User;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.jdbc.DataJdbcTest;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static com.todev.pdv.core.enums.Role.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace.NONE;
 
 @DataJdbcTest
@@ -27,130 +31,359 @@ class UserRepositoryTest {
 
     @Test
     void findByDeletedAtIsNull_UsersShouldBeReturned_WhenHaveActiveUsers() {
-        userRepository.saveAll(List.of(
-                UserFactory.getAdmin(),
-                UserFactory.getManager(),
-                UserFactory.getSeller())
-        );
-        var users = userRepository.findByDeletedAtIsNull(PageRequest.of(0, 5));
+        User admin = new UserBuilder()
+                .builder()
+                .name("Admin")
+                .login("admin")
+                .password("12345")
+                .role(ADMIN)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        User manager = new UserBuilder()
+                .builder()
+                .name("Manager")
+                .login("manager")
+                .password("12345")
+                .role(MANAGER)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        User seller = new UserBuilder()
+                .builder()
+                .name("Seller")
+                .login("seller")
+                .password("12345")
+                .role(SELLER)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        userRepository.saveAll(List.of(admin, manager, seller));
+
+        Page<User> users = userRepository.findByDeletedAtIsNull(PageRequest.of(0, 5));
+
         assertEquals(3, users.getContent().size());
     }
 
     @Test
     void findByDeletedAtIsNull_UsersShouldNotBeReturned_WhenDoNotHaveActiveUsers() {
-        userRepository.saveAll(List.of(
-                UserFactory.getInactiveAdmin(),
-                UserFactory.getInactiveManager(),
-                UserFactory.getInactiveSeller())
-        );
-        var users = userRepository.findByDeletedAtIsNull(PageRequest.of(0, 5));
+        User seller = new UserBuilder()
+                .builder()
+                .name("Seller")
+                .login("seller")
+                .password("12345")
+                .role(SELLER)
+                .createdAt(LocalDateTime.now())
+                .deletedAt(LocalDateTime.now())
+                .build();
+
+        userRepository.save(seller);
+
+        Page<User> users = userRepository.findByDeletedAtIsNull(PageRequest.of(0, 5));
+
         assertTrue(users.isEmpty());
     }
 
     @Test
     void findByDeletedAtIsNotNull_UsersShouldBeReturned_WhenHaveInactiveUsers() {
-        userRepository.saveAll(List.of(
-                UserFactory.getInactiveAdmin(),
-                UserFactory.getInactiveManager(),
-                UserFactory.getInactiveSeller())
-        );
-        var users = userRepository.findByDeletedAtIsNotNull(PageRequest.of(0, 5));
+        User admin = new UserBuilder()
+                .builder()
+                .name("Admin")
+                .login("admin")
+                .password("12345")
+                .role(ADMIN)
+                .createdAt(LocalDateTime.now())
+                .deletedAt(LocalDateTime.now())
+                .build();
+
+        User manager = new UserBuilder()
+                .builder()
+                .name("Manager")
+                .login("manager")
+                .password("12345")
+                .role(MANAGER)
+                .createdAt(LocalDateTime.now())
+                .deletedAt(LocalDateTime.now())
+                .build();
+
+        User seller = new UserBuilder()
+                .builder()
+                .name("Seller")
+                .login("seller")
+                .password("12345")
+                .role(SELLER)
+                .createdAt(LocalDateTime.now())
+                .deletedAt(LocalDateTime.now())
+                .build();
+
+        userRepository.saveAll(List.of(admin, manager, seller));
+
+        Page<User> users = userRepository.findByDeletedAtIsNotNull(PageRequest.of(0, 5));
+
         assertEquals(3, users.getContent().size());
     }
 
     @Test
     void findByDeletedAtIsNotNull_UsersShouldNotBeReturned_WhenDoNotHaveInactiveUsers() {
-        userRepository.saveAll(List.of(
-                UserFactory.getAdmin(),
-                UserFactory.getManager(),
-                UserFactory.getSeller())
-        );
-        var users = userRepository.findByDeletedAtIsNotNull(PageRequest.of(0, 5));
+        User admin = new UserBuilder()
+                .builder()
+                .name("Admin")
+                .login("admin")
+                .password("12345")
+                .role(ADMIN)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        User manager = new UserBuilder()
+                .builder()
+                .name("Manager")
+                .login("manager")
+                .password("12345")
+                .role(MANAGER)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        User seller = new UserBuilder()
+                .builder()
+                .name("Seller")
+                .login("seller")
+                .password("12345")
+                .role(SELLER)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        userRepository.saveAll(List.of(admin, manager, seller));
+
+        Page<User> users = userRepository.findByDeletedAtIsNotNull(PageRequest.of(0, 5));
+
         assertTrue(users.isEmpty());
     }
 
     @Test
     void findByNameContainingAndDeletedAtIsNull_UsersShouldBeReturned_WhenHaveActiveUsersWithNameContaining() {
-        userRepository.save(UserFactory.getAdmin());
-        var users = userRepository.findByNameContainingAndDeletedAtIsNull("dm", PageRequest.of(0, 5));
-        assertEquals(1, users.getContent().size());
+        User admin = new UserBuilder()
+                .builder()
+                .name("Admin")
+                .login("admin")
+                .password("12345")
+                .role(ADMIN)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        userRepository.save(admin);
+
+        Page<User> users = userRepository.findByNameContainingAndDeletedAtIsNull("dm", PageRequest.of(0, 5));
+
+        assertAll(() -> {
+            assertEquals(1, users.getContent().size());
+            assertTrue(users.getContent().getFirst().getName().contains("dm"));
+        });
     }
 
     @Test
     void findByNameContainingAndDeletedAtIsNull_UsersShouldNotBeReturned_WhenDoNotHaveActiveUsersWithNameContaining() {
-        userRepository.save(UserFactory.getInactiveAdmin());
-        var users = userRepository.findByNameContainingAndDeletedAtIsNull("dm", PageRequest.of(0, 5));
+        User manager = new UserBuilder()
+                .builder()
+                .name("Manager")
+                .login("manager")
+                .password("12345")
+                .role(MANAGER)
+                .createdAt(LocalDateTime.now())
+                .deletedAt(LocalDateTime.now())
+                .build();
+
+        userRepository.save(manager);
+
+        Page<User> users = userRepository.findByNameContainingAndDeletedAtIsNull("ger", PageRequest.of(0, 5));
+
         assertTrue(users.isEmpty());
     }
 
     @Test
     void findByNameContainingAndDeletedAtIsNotNull_UsersShouldBeReturned_WhenHaveInactiveUsersWithNameContaining() {
-        userRepository.save(UserFactory.getInactiveManager());
-        var users = userRepository.findByNameContainingAndDeletedAtIsNotNull("ger", PageRequest.of(0, 5));
-        assertEquals(1, users.getContent().size());
+        User manager = new UserBuilder()
+                .builder()
+                .name("Manager")
+                .login("manager")
+                .password("12345")
+                .role(MANAGER)
+                .createdAt(LocalDateTime.now())
+                .deletedAt(LocalDateTime.now())
+                .build();
+
+        userRepository.save(manager);
+
+        Page<User> users = userRepository.findByNameContainingAndDeletedAtIsNotNull("ger", PageRequest.of(0, 5));
+
+        assertAll(() -> {
+            assertEquals(1, users.getContent().size());
+            assertTrue(users.getContent().getFirst().getName().contains("ger"));
+        });
     }
 
     @Test
     void findByNameContainingAndDeletedAtIsNotNull_UsersShouldNotBeReturned_WhenDoNotHaveInactiveUsersWithNameContaining() {
-        userRepository.save(UserFactory.getManager());
-        var users = userRepository.findByNameContainingAndDeletedAtIsNotNull("dm", PageRequest.of(0, 5));
+        User manager = new UserBuilder()
+                .builder()
+                .name("Manager")
+                .login("manager")
+                .password("12345")
+                .role(MANAGER)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        userRepository.save(manager);
+
+        Page<User> users = userRepository.findByNameContainingAndDeletedAtIsNotNull("man", PageRequest.of(0, 5));
+
         assertTrue(users.isEmpty());
     }
 
     @Test
     void findByIdAndDeletedAtIsNull_UserShouldBeReturned_WhenIdWasFound() {
-        var activeUser = userRepository.save(UserFactory.getSeller());
-        var activeUserById = userRepository.findByIdAndDeletedAtIsNull(activeUser.getId());
-        assertTrue(activeUserById.isPresent());
+        User seller = new UserBuilder()
+                .builder()
+                .name("Seller")
+                .login("seller")
+                .password("12345")
+                .role(SELLER)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        userRepository.save(seller);
+
+        Optional<User> searchedUser = userRepository.findByIdAndDeletedAtIsNull(seller.getId());
+
+        assertTrue(searchedUser.isPresent());
     }
 
     @Test
     void findByIdAndDeletedAtIsNull_UserShouldNotBeReturned_WhenIdWasNotFound() {
-        var inactiveUser = userRepository.save(UserFactory.getInactiveSeller());
-        var activeUserById = userRepository.findByIdAndDeletedAtIsNull(inactiveUser.getId());
-        assertTrue(activeUserById.isEmpty());
+        User seller = new UserBuilder()
+                .builder()
+                .name("Seller")
+                .login("seller")
+                .password("12345")
+                .role(SELLER)
+                .createdAt(LocalDateTime.now())
+                .deletedAt(LocalDateTime.now())
+                .build();
+
+        userRepository.save(seller);
+
+        Optional<User> searchedUser = userRepository.findByIdAndDeletedAtIsNull(seller.getId());
+
+        assertTrue(searchedUser.isEmpty());
     }
 
     @Test
     void findByIdAndDeletedAtIsNotNull_UserShouldBeReturned_WhenIdWasFound() {
-        var inactiveUser = userRepository.save(UserFactory.getInactiveAdmin());
-        var inactiveUserById = userRepository.findByIdAndDeletedAtIsNotNull(inactiveUser.getId());
-        assertTrue(inactiveUserById.isPresent());
+        User admin = new UserBuilder()
+                .builder()
+                .name("Admin")
+                .login("admin")
+                .password("12345")
+                .role(ADMIN)
+                .createdAt(LocalDateTime.now())
+                .deletedAt(LocalDateTime.now())
+                .build();
+
+        userRepository.save(admin);
+
+        Optional<User> searchedUser = userRepository.findByIdAndDeletedAtIsNotNull(admin.getId());
+
+        assertTrue(searchedUser.isPresent());
     }
 
     @Test
     void findByIdAndDeletedAtIsNotNull_UserShouldNotBeReturned_WhenIdWasNotFound() {
-        var activeUser = userRepository.save(UserFactory.getAdmin());
-        var inactiveUserById = userRepository.findByIdAndDeletedAtIsNotNull(activeUser.getId());
-        assertTrue(inactiveUserById.isEmpty());
+        User admin = new UserBuilder()
+                .builder()
+                .name("Admin")
+                .login("admin")
+                .password("12345")
+                .role(ADMIN)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        userRepository.save(admin);
+
+        Optional<User> searchedUser = userRepository.findByIdAndDeletedAtIsNotNull(admin.getId());
+
+        assertTrue(searchedUser.isEmpty());
     }
 
     @Test
     void findByLogin_UserShouldBeReturned_WhenLoginWasFound() {
-        userRepository.save(UserFactory.getAdmin());
-        var user = userRepository.findByLogin("admin");
-        assertTrue(user.isPresent());
+        User admin = new UserBuilder()
+                .builder()
+                .name("Admin")
+                .login("admin")
+                .password("12345")
+                .role(ADMIN)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        userRepository.save(admin);
+
+        Optional<User> searchedUser = userRepository.findByLogin("admin");
+
+        assertTrue(searchedUser.isPresent());
     }
 
     @Test
     void findByLogin_UserShouldNotBeReturned_WhenLoginWasNotFound() {
-        userRepository.save(UserFactory.getAdmin());
-        var user = userRepository.findByLogin("admins");
-        assertTrue(user.isEmpty());
+        User admin = new UserBuilder()
+                .builder()
+                .name("Admin")
+                .login("admin")
+                .password("12345")
+                .role(ADMIN)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        userRepository.save(admin);
+
+        Optional<User> searchedUser = userRepository.findByLogin("admins");
+
+        assertTrue(searchedUser.isEmpty());
     }
 
     @Test
     void findByLoginAndDeletedAtIsNull_UserShouldBeReturned_WhenLoginWasFound() {
-        userRepository.save(UserFactory.getManager());
-        var user = userRepository.findByLoginAndDeletedAtIsNull("manager");
-        assertTrue(user.isPresent());
+        User manager = new UserBuilder()
+                .builder()
+                .name("Manager")
+                .login("manager")
+                .password("12345")
+                .role(MANAGER)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        userRepository.save(manager);
+
+        Optional<User> searchedUser = userRepository.findByLoginAndDeletedAtIsNull("manager");
+
+        assertTrue(searchedUser.isPresent());
     }
 
     @Test
     void findByLoginAndDeletedAtIsNull_UserShouldNotBeReturned_WhenLoginWasNotFound() {
-        userRepository.save(UserFactory.getInactiveSeller());
-        var user = userRepository.findByLoginAndDeletedAtIsNull("seller");
-        assertTrue(user.isEmpty());
+        User seller = new UserBuilder()
+                .builder()
+                .name("Seller")
+                .login("seller")
+                .password("12345")
+                .role(SELLER)
+                .createdAt(LocalDateTime.now())
+                .deletedAt(LocalDateTime.now())
+                .build();
+
+        userRepository.save(seller);
+
+        Optional<User> searchedUser = userRepository.findByLoginAndDeletedAtIsNull("seller");
+
+        assertTrue(searchedUser.isEmpty());
     }
 
 }
