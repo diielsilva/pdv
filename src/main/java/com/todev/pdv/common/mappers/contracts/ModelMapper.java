@@ -9,22 +9,22 @@ import com.todev.pdv.core.models.User;
 import java.util.List;
 
 public interface ModelMapper {
-    User toModel(UserRequestBody userRequest);
+    User toModel(UserRequestBody requestBody);
 
-    UserResponseBody toDTO(User user);
+    UserResponseBody toResponseBody(User user);
 
-    Product toModel(ProductRequest productRequest);
+    Product toModel(ProductRequest requestBody);
 
-    ProductResponse toDTO(Product product);
+    ProductResponse toResponseBody(Product product);
 
-    Sale toModel(SaleRequest saleRequest);
+    Sale toModel(SaleRequest requestBody);
 
-    SaleResponse toDTO(Sale sale);
+    SaleResponse toResponseBody(Sale sale);
 
-    SaleDetailsResponse toDTO(User user, List<SaleItem> items, List<Product> products);
+    SaleDetailsResponse toResponseBody(User user, List<SaleItem> items, List<Product> products);
 
-    SaleItem toModel(SaleItemRequest saleItemRequest);
+    SaleItem toModel(SaleItemRequest requestBody);
 
-    SaleItemResponse toDTO(SaleItem item, Product product);
+    SaleItemResponse toResponseBody(SaleItem item, Product product);
 
 }

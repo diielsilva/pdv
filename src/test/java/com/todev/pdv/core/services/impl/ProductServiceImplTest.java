@@ -66,7 +66,7 @@ class ProductServiceImplTest {
         when(modelMapper.toModel(any(ProductRequest.class)))
                 .thenReturn(ProductFactory.getProduct());
 
-        when(modelMapper.toDTO(any(Product.class)))
+        when(modelMapper.toResponseBody(any(Product.class)))
                 .thenReturn(ProductFactory.getResponseDTO());
     }
 

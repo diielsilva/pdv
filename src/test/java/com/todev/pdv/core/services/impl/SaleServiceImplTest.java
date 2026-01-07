@@ -128,7 +128,7 @@ class SaleServiceImplTest {
         when(modelMapper.toModel(any(SaleItemRequest.class)))
                 .thenReturn(SaleItemFactory.getSaleItem());
 
-        when(modelMapper.toDTO(any(Sale.class)))
+        when(modelMapper.toResponseBody(any(Sale.class)))
                 .thenReturn(SaleFactory.getResponseDTO());
     }
 

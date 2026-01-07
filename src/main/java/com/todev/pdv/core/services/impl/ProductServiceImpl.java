@@ -36,43 +36,43 @@ public class ProductServiceImpl implements ProductService {
 
         product.setCreatedAt(LocalDateTime.now(ZoneId.of(ZONE_ID)));
         productProvider.save(product);
-        return modelMapper.toDTO(product);
+        return modelMapper.toResponseBody(product);
     }
 
     @Override
     public Page<ProductResponse> findActive(Pageable pageable) {
         var products = productProvider.findActive(pageable);
-        return products.map(modelMapper::toDTO);
+        return products.map(modelMapper::toResponseBody);
     }
 
     @Override
     public Page<ProductResponse> findInactive(Pageable pageable) {
         var products = productProvider.findInactive(pageable);
-        return products.map(modelMapper::toDTO);
+        return products.map(modelMapper::toResponseBody);
     }
 
     @Override
     public Page<ProductResponse> findActiveByDescriptionContaining(String description, Pageable pageable) {
         var products = productProvider.findActiveByDescriptionContaining(description, pageable);
-        return products.map(modelMapper::toDTO);
+        return products.map(modelMapper::toResponseBody);
     }
 
     @Override
     public Page<ProductResponse> findInactiveByDescriptionContaining(String description, Pageable pageable) {
         var products = productProvider.findInactiveByDescriptionContaining(description, pageable);
-        return products.map(modelMapper::toDTO);
+        return products.map(modelMapper::toResponseBody);
     }
 
     @Override
     public ProductResponse findActiveById(Integer id) {
         var product = productProvider.findActiveById(id);
-        return modelMapper.toDTO(product);
+        return modelMapper.toResponseBody(product);
     }
 
     @Override
     public ProductResponse findInactiveById(Integer id) {
         var product = productProvider.findInactiveById(id);
-        return modelMapper.toDTO(product);
+        return modelMapper.toResponseBody(product);
     }
 
     @Transactional
@@ -90,7 +90,7 @@ public class ProductServiceImpl implements ProductService {
         savedProduct.setAmount(product.getAmount());
         savedProduct.setPrice(product.getPrice());
         productProvider.save(savedProduct);
-        return modelMapper.toDTO(savedProduct);
+        return modelMapper.toResponseBody(savedProduct);
     }
 
     @Transactional

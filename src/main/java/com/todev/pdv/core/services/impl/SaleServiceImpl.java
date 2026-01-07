@@ -86,7 +86,7 @@ public class SaleServiceImpl implements SaleService {
         sale.setTotal(total);
         saleProvider.save(sale);
 
-        return modelMapper.toDTO(sale);
+        return modelMapper.toResponseBody(sale);
     }
 
     @Override
@@ -109,13 +109,13 @@ public class SaleServiceImpl implements SaleService {
     @Override
     public Page<SaleResponse> findActive(Pageable pageable) {
         var sales = saleProvider.findActive(pageable);
-        return sales.map(modelMapper::toDTO);
+        return sales.map(modelMapper::toResponseBody);
     }
 
     @Override
     public Page<SaleResponse> findInactive(Pageable pageable) {
         var sales = saleProvider.findInactive(pageable);
-        return sales.map(modelMapper::toDTO);
+        return sales.map(modelMapper::toResponseBody);
     }
 
     @Override
@@ -123,7 +123,7 @@ public class SaleServiceImpl implements SaleService {
         var start = date.withHour(0).withMinute(0).withSecond(0);
         var end = date.withHour(23).withMinute(59).withSecond(59);
         var sales = saleProvider.findActiveByDate(start, end);
-        return sales.stream().map(modelMapper::toDTO).toList();
+        return sales.stream().map(modelMapper::toResponseBody).toList();
     }
 
     @Override
@@ -131,19 +131,19 @@ public class SaleServiceImpl implements SaleService {
         var start = date.withHour(0).withMinute(0).withSecond(0);
         var end = date.withHour(23).withMinute(59).withSecond(59);
         var sales = saleProvider.findInactiveByDate(start, end);
-        return sales.stream().map(modelMapper::toDTO).toList();
+        return sales.stream().map(modelMapper::toResponseBody).toList();
     }
 
     @Override
     public SaleResponse findActiveById(Integer id) {
         var sale = saleProvider.findActiveById(id);
-        return modelMapper.toDTO(sale);
+        return modelMapper.toResponseBody(sale);
     }
 
     @Override
     public SaleResponse findInactiveById(Integer id) {
         var sale = saleProvider.findInactiveById(id);
-        return modelMapper.toDTO(sale);
+        return modelMapper.toResponseBody(sale);
     }
 
     @Override
@@ -158,7 +158,7 @@ public class SaleServiceImpl implements SaleService {
             products.add(product);
         });
 
-        return modelMapper.toDTO(user, items, products);
+        return modelMapper.toResponseBody(user, items, products);
     }
 
     @Override

@@ -33,7 +33,7 @@ public class ModelMapperImpl implements ModelMapper {
     }
 
     @Override
-    public UserResponseBody toDTO(User user) {
+    public UserResponseBody toResponseBody(User user) {
         return new UserResponseBody(
                 user.getId(),
                 user.getName(),
@@ -44,17 +44,17 @@ public class ModelMapperImpl implements ModelMapper {
     }
 
     @Override
-    public Product toModel(ProductRequest body) {
+    public Product toModel(ProductRequest requestBody) {
         return new ProductBuilder()
                 .builder()
-                .description(body.description())
-                .amount(body.amount())
-                .price(body.price())
+                .description(requestBody.description())
+                .amount(requestBody.amount())
+                .price(requestBody.price())
                 .build();
     }
 
     @Override
-    public ProductResponse toDTO(Product product) {
+    public ProductResponse toResponseBody(Product product) {
         return new ProductResponse(
                 product.getId(),
                 product.getDescription(),
@@ -75,7 +75,7 @@ public class ModelMapperImpl implements ModelMapper {
     }
 
     @Override
-    public SaleResponse toDTO(Sale sale) {
+    public SaleResponse toResponseBody(Sale sale) {
         return new SaleResponse(
                 sale.getId(),
                 sale.getPaymentMethod(),
@@ -87,11 +87,11 @@ public class ModelMapperImpl implements ModelMapper {
     }
 
     @Override
-    public SaleDetailsResponse toDTO(User user, List<SaleItem> items, List<Product> products) {
+    public SaleDetailsResponse toResponseBody(User user, List<SaleItem> items, List<Product> products) {
         var responseItems = new ArrayList<SaleItemResponse>();
 
         for (int i = 0; i < items.size(); i++) {
-            responseItems.add(toDTO(items.get(i), products.get(i)));
+            responseItems.add(toResponseBody(items.get(i), products.get(i)));
         }
 
         return new SaleDetailsResponse(
@@ -110,7 +110,7 @@ public class ModelMapperImpl implements ModelMapper {
     }
 
     @Override
-    public SaleItemResponse toDTO(SaleItem item, Product product) {
+    public SaleItemResponse toResponseBody(SaleItem item, Product product) {
         return new SaleItemResponse(
                 item.getProductId(),
                 product.getDescription(),

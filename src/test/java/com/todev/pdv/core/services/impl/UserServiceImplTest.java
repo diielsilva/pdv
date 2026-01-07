@@ -84,7 +84,7 @@ class UserServiceImplTest {
 
         when(modelMapper.toModel(any(UserRequestBody.class))).thenReturn(seller);
 
-        when(modelMapper.toDTO(any(User.class))).thenReturn(user);
+        when(modelMapper.toResponseBody(any(User.class))).thenReturn(user);
 
     }
 
