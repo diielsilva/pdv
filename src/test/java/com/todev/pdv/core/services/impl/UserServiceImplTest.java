@@ -1,27 +1,31 @@
 package com.todev.pdv.core.services.impl;
 
 import com.todev.pdv.common.dtos.UserRequestBody;
+import com.todev.pdv.common.dtos.UserResponseBody;
 import com.todev.pdv.common.mappers.contracts.ModelMapper;
+import com.todev.pdv.core.builders.UserBuilder;
 import com.todev.pdv.core.exceptions.ConstraintConflictException;
 import com.todev.pdv.core.exceptions.DependencyInUseException;
 import com.todev.pdv.core.exceptions.PermissionDeniedException;
 import com.todev.pdv.core.models.User;
 import com.todev.pdv.core.providers.contracts.UserProvider;
-import com.todev.pdv.factories.UserFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static com.todev.pdv.core.enums.Role.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.when;
@@ -35,100 +39,122 @@ class UserServiceImplTest {
     private UserProvider userProvider;
 
     @Mock
-    private PasswordEncoder BCryptEncoder;
+    private PasswordEncoder passwordEncoder;
 
     @Mock
     private ModelMapper modelMapper;
 
+    private static final Pageable PAGE = PageRequest.of(0, 5);
+
     @BeforeEach
     void setUp() {
-        when(userProvider.save(any(User.class)))
-                .thenReturn(UserFactory.getSavedSeller());
+        User seller = new UserBuilder()
+                .builder()
+                .id(1)
+                .name("Seller")
+                .login("seller")
+                .password("12345")
+                .role(SELLER)
+                .createdAt(LocalDateTime.now())
+                .build();
 
-        when(userProvider.findActive(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(UserFactory.getSavedAdmin())));
+        Page<User> users = new PageImpl<>(List.of(seller));
 
-        when(userProvider.findInactive(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(UserFactory.getInactiveSavedManager())));
+        UserResponseBody user = new UserResponseBody(1, "Seller", SELLER, LocalDateTime.now(), null);
 
-        when(userProvider.findActiveByNameContaining(anyString(), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(UserFactory.getSavedSeller())));
+        when(userProvider.save(any(User.class))).thenReturn(seller);
 
-        when(userProvider.findInactiveByNameContaining(anyString(), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(UserFactory.getInactiveSavedManager())));
+        when(userProvider.findActive(any(Pageable.class))).thenReturn(users);
 
-        when(userProvider.findActiveById(anyInt()))
-                .thenReturn(UserFactory.getSavedSeller());
+        when(userProvider.findInactive(any(Pageable.class))).thenReturn(users);
 
-        when(userProvider.findInactiveById(anyInt()))
-                .thenReturn(UserFactory.getInactiveSavedManager());
+        when(userProvider.findActiveByNameContaining(anyString(), any(Pageable.class))).thenReturn(users);
 
-        when(userProvider.findByLogin(anyString()))
-                .thenReturn(Optional.empty());
+        when(userProvider.findInactiveByNameContaining(anyString(), any(Pageable.class))).thenReturn(users);
 
-        when(userProvider.findActiveByLogin(anyString()))
-                .thenReturn(UserFactory.getSavedSeller());
+        when(userProvider.findActiveById(anyInt())).thenReturn(seller);
 
-        when(BCryptEncoder.encode(anyString()))
-                .thenReturn("12345");
+        when(userProvider.findInactiveById(anyInt())).thenReturn(seller);
 
-        when(modelMapper.toModel(any(UserRequestBody.class)))
-                .thenReturn(UserFactory.getSeller());
+        when(userProvider.findByLogin(anyString())).thenReturn(Optional.empty());
 
-        when(modelMapper.toDTO(any(User.class)))
-                .thenReturn(UserFactory.getResponseDTO());
+        when(userProvider.findActiveByLogin(anyString())).thenReturn(seller);
+
+        when(passwordEncoder.encode(anyString())).thenReturn("12345");
+
+        when(modelMapper.toModel(any(UserRequestBody.class))).thenReturn(seller);
+
+        when(modelMapper.toDTO(any(User.class))).thenReturn(user);
 
     }
 
     @Test
     void save_UserShouldBeSaved() {
-        assertDoesNotThrow(() -> userService.save(UserFactory.getRequestDTO()));
+        UserRequestBody requestBody = new UserRequestBody("Seller", "seller", "12345", "SELLER");
+
+        assertDoesNotThrow(() -> userService.save(requestBody));
     }
 
     @Test
     void save_UserShouldNotBeSaved_WhenUserIsAnAdmin() {
-        when(modelMapper.toModel(any(UserRequestBody.class)))
-                .thenReturn(UserFactory.getAdmin());
+        User admin = new UserBuilder()
+                .builder()
+                .name("Admin")
+                .login("admin")
+                .password("12345")
+                .role(ADMIN)
+                .createdAt(LocalDateTime.now())
+                .build();
 
-        var user = new UserRequestBody("Admin", "admin", "12345", "ADMIN");
+        when(modelMapper.toModel(any(UserRequestBody.class))).thenReturn(admin);
 
-        assertThrows(PermissionDeniedException.class, () -> userService.save(user));
+        UserRequestBody requestBody = new UserRequestBody("Admin", "admin", "12345", "ADMIN");
+
+        assertThrows(PermissionDeniedException.class, () -> userService.save(requestBody));
     }
 
     @Test
     void save_UserShouldNotBeSaved_WhenLoginIsInUse() {
-        when(userProvider.findByLogin(anyString()))
-                .thenReturn(Optional.of(UserFactory.getSavedManager()));
+        User manager = new UserBuilder()
+                .builder()
+                .name("Manager")
+                .login("manager")
+                .password("12345")
+                .role(MANAGER)
+                .createdAt(LocalDateTime.now())
+                .build();
 
-        var user = new UserRequestBody("Manager", "manager", "12345", "MANAGER");
+        when(userProvider.findByLogin(anyString())).thenReturn(Optional.of(manager));
 
-        assertThrows(ConstraintConflictException.class, () -> userService.save(user));
+        UserRequestBody requestBody = new UserRequestBody("Manager", "manager", "12345", "MANAGER");
+
+        assertThrows(ConstraintConflictException.class, () -> userService.save(requestBody));
     }
 
     @Test
     void findActive_UsersShouldBeReturned() {
-        var users = userService.findActive(PageRequest.of(0, 5));
+        Page<UserResponseBody> users = userService.findActive(PAGE);
 
         assertEquals(1, users.getContent().size());
     }
 
     @Test
     void findInactive_UsersShouldBeReturned() {
-        var users = userService.findInactive(PageRequest.of(0, 5));
+        Page<UserResponseBody> users = userService.findInactive(PAGE);
 
         assertEquals(1, users.getContent().size());
     }
 
     @Test
     void findActiveByNameContaining_UsersShouldBeReturned_WhenHaveActiveUsersWithNameContaining() {
-        var users = userService.findActiveByNameContaining("Sel", PageRequest.of(0, 5));
+        Page<UserResponseBody> users = userService.findActiveByNameContaining("Sel", PAGE);
 
         assertEquals(1, users.getContent().size());
     }
 
     @Test
     void findInactiveByNameContaining_UsersShouldBeReturned_WhenHaveInactiveUsersWithNameContaining() {
-        var users = userService.findInactiveByNameContaining("Man", PageRequest.of(0, 5));
+        Page<UserResponseBody> users = userService.findInactiveByNameContaining("Man", PAGE);
 
         assertEquals(1, users.getContent().size());
     }
@@ -145,58 +171,110 @@ class UserServiceImplTest {
 
     @Test
     void update_UserShouldBeUpdated_WhenValidUserWasReceivedAndLoginIsInUseBySameUser() {
-        when(userProvider.findByLogin(anyString()))
-                .thenReturn(Optional.of(UserFactory.getSavedSeller()));
+        User seller = new UserBuilder()
+                .builder()
+                .id(1)
+                .name("Seller")
+                .login("seller")
+                .password("12345")
+                .role(SELLER)
+                .createdAt(LocalDateTime.now())
+                .build();
 
-        var user = UserFactory.getRequestDTO();
+        when(userProvider.findByLogin(anyString())).thenReturn(Optional.of(seller));
 
-        assertDoesNotThrow(() -> userService.update("seller", user));
+        UserRequestBody requestBody = new UserRequestBody("Seller", "seller", "12345", "SELLER");
+
+        assertDoesNotThrow(() -> userService.update("seller", requestBody));
     }
 
     @Test
     void update_UserShouldBeUpdated_WhenValidUserWasReceivedAndLoginIsNotInUse() {
-        var user = UserFactory.getManagerWithoutIssues();
-        assertDoesNotThrow(() -> userService.update("seller", user));
+        UserRequestBody requestBody = new UserRequestBody("Manager", "manager", "12345", "MANAGER");
+
+        assertDoesNotThrow(() -> userService.update("seller", requestBody));
     }
 
     @Test
     void update_UserShouldNotBeUpdated_WhenLoginIsInUseByAnotherUser() {
-        when(userProvider.findByLogin(anyString()))
-                .thenReturn(Optional.of(UserFactory.getSavedManager()));
-        when(modelMapper.toModel(any(UserRequestBody.class)))
-                .thenReturn(UserFactory.getManager());
-        var user = UserFactory.getManagerWithoutIssues();
-        assertThrows(ConstraintConflictException.class, () -> userService.update("seller", user));
+        User manager = new UserBuilder()
+                .builder()
+                .name("Manager")
+                .login("manager")
+                .password("12345")
+                .role(MANAGER)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(userProvider.findByLogin(anyString())).thenReturn(Optional.of(manager));
+
+        when(modelMapper.toModel(any(UserRequestBody.class))).thenReturn(manager);
+
+        UserRequestBody requestBody = new UserRequestBody("Manager", "manager", "12345", "MANAGER");
+
+        assertThrows(ConstraintConflictException.class, () -> userService.update("seller", requestBody));
     }
 
     @Test
     void delete_UserShouldBeDeleted_WhenIdWasFoundAndOnlineUserIsAManager() {
-        var user = UserFactory.getSavedSeller();
-        user.setId(2);
-        when(userProvider.findActiveByLogin(anyString()))
-                .thenReturn(UserFactory.getSavedManager());
-        when(userProvider.findActiveById(anyInt()))
-                .thenReturn(user);
+        User manager = new UserBuilder()
+                .builder()
+                .id(1)
+                .name("Manager")
+                .login("manager")
+                .password("12345")
+                .role(MANAGER)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        User seller = new UserBuilder()
+                .builder()
+                .id(2)
+                .name("Seller")
+                .login("seller")
+                .password("12345")
+                .role(SELLER)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(userProvider.findActiveByLogin(anyString())).thenReturn(manager);
+
+        when(userProvider.findActiveById(anyInt())).thenReturn(seller);
+
         assertDoesNotThrow(() -> userService.delete("manager", 2));
     }
 
     @Test
     void delete_UserShouldNotBeDeleted_WhenOnlineUserTriesToDeleteHimself() {
-        when(userProvider.findActiveByLogin(anyString()))
-                .thenReturn(UserFactory.getSavedManager());
-        when(userProvider.findActiveById(anyInt()))
-                .thenReturn(UserFactory.getSavedManager());
         assertThrows(DependencyInUseException.class, () -> userService.delete("manager", 1));
     }
 
     @Test
     void delete_UserShouldNotBeDeleted_WhenOnlineUserDoesNotHavePermissionToDeleteAnotherManager() {
-        var user = UserFactory.getSavedManager();
-        user.setId(2);
-        when(userProvider.findActiveByLogin(anyString()))
-                .thenReturn(UserFactory.getSavedManager());
-        when(userProvider.findActiveById(anyInt()))
-                .thenReturn(user);
+        User onlineUser = new UserBuilder()
+                .builder()
+                .id(1)
+                .name("Manager")
+                .login("manager")
+                .password("12345")
+                .role(MANAGER)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        User user = new UserBuilder()
+                .builder()
+                .id(2)
+                .name("Manager")
+                .login("manager2")
+                .password("12345")
+                .role(MANAGER)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(userProvider.findActiveByLogin(anyString())).thenReturn(onlineUser);
+
+        when(userProvider.findActiveById(anyInt())).thenReturn(user);
+
         assertThrows(PermissionDeniedException.class, () -> userService.delete("manager", 2));
     }
 
