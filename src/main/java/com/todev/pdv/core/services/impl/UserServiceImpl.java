@@ -1,7 +1,7 @@
 package com.todev.pdv.core.services.impl;
 
-import com.todev.pdv.common.dtos.UserRequest;
-import com.todev.pdv.common.dtos.UserResponse;
+import com.todev.pdv.common.dtos.UserRequestBody;
+import com.todev.pdv.common.dtos.UserResponseBody;
 import com.todev.pdv.common.mappers.contracts.ModelMapper;
 import com.todev.pdv.core.enums.Role;
 import com.todev.pdv.core.exceptions.ConstraintConflictException;
@@ -31,7 +31,7 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public UserResponse save(UserRequest requestDTO) {
+    public UserResponseBody save(UserRequestBody requestDTO) {
         var user = modelMapper.toModel(requestDTO);
 
         if (user.getRole().equals(Role.ADMIN)) {
@@ -49,44 +49,44 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Page<UserResponse> findActive(Pageable pageable) {
+    public Page<UserResponseBody> findActive(Pageable pageable) {
         var users = userProvider.findActive(pageable);
         return users.map(modelMapper::toDTO);
     }
 
     @Override
-    public Page<UserResponse> findInactive(Pageable pageable) {
+    public Page<UserResponseBody> findInactive(Pageable pageable) {
         var users = userProvider.findInactive(pageable);
         return users.map(modelMapper::toDTO);
     }
 
     @Override
-    public Page<UserResponse> findActiveByNameContaining(String name, Pageable pageable) {
+    public Page<UserResponseBody> findActiveByNameContaining(String name, Pageable pageable) {
         var users = userProvider.findActiveByNameContaining(name, pageable);
         return users.map(modelMapper::toDTO);
     }
 
     @Override
-    public Page<UserResponse> findInactiveByNameContaining(String name, Pageable pageable) {
+    public Page<UserResponseBody> findInactiveByNameContaining(String name, Pageable pageable) {
         var users = userProvider.findInactiveByNameContaining(name, pageable);
         return users.map(modelMapper::toDTO);
     }
 
     @Override
-    public UserResponse findActiveById(Integer id) {
+    public UserResponseBody findActiveById(Integer id) {
         var user = userProvider.findActiveById(id);
         return modelMapper.toDTO(user);
     }
 
     @Override
-    public UserResponse findInactiveById(Integer id) {
+    public UserResponseBody findInactiveById(Integer id) {
         var user = userProvider.findInactiveById(id);
         return modelMapper.toDTO(user);
     }
 
     @Transactional
     @Override
-    public UserResponse update(String onlineLogin, UserRequest requestDTO) {
+    public UserResponseBody update(String onlineLogin, UserRequestBody requestDTO) {
         var savedUser = userProvider.findActiveByLogin(onlineLogin);
         var newUser = modelMapper.toModel(requestDTO);
 

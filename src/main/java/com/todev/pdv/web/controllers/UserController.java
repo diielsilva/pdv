@@ -1,7 +1,7 @@
 package com.todev.pdv.web.controllers;
 
-import com.todev.pdv.common.dtos.UserRequest;
-import com.todev.pdv.common.dtos.UserResponse;
+import com.todev.pdv.common.dtos.UserRequestBody;
+import com.todev.pdv.common.dtos.UserResponseBody;
 import com.todev.pdv.core.services.contracts.UserService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -24,55 +24,55 @@ public class UserController {
 
     @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @PostMapping
-    public ResponseEntity<UserResponse> save(@RequestBody @Valid UserRequest requestDTO) {
+    public ResponseEntity<UserResponseBody> save(@RequestBody @Valid UserRequestBody requestDTO) {
         var user = userService.save(requestDTO);
         return new ResponseEntity<>(user, CREATED);
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @GetMapping("active")
-    public ResponseEntity<Page<UserResponse>> findActive(Pageable pageable) {
+    public ResponseEntity<Page<UserResponseBody>> findActive(Pageable pageable) {
         var users = userService.findActive(pageable);
         return new ResponseEntity<>(users, OK);
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @GetMapping("inactive")
-    public ResponseEntity<Page<UserResponse>> findInactive(Pageable pageable) {
+    public ResponseEntity<Page<UserResponseBody>> findInactive(Pageable pageable) {
         var users = userService.findInactive(pageable);
         return new ResponseEntity<>(users, OK);
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @GetMapping("active/search")
-    public ResponseEntity<Page<UserResponse>> findActiveByNameContaining(@RequestParam String name, Pageable pageable) {
+    public ResponseEntity<Page<UserResponseBody>> findActiveByNameContaining(@RequestParam String name, Pageable pageable) {
         var users = userService.findActiveByNameContaining(name, pageable);
         return new ResponseEntity<>(users, OK);
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @GetMapping("inactive/search")
-    public ResponseEntity<Page<UserResponse>> findInactiveByNameContaining(@RequestParam String name, Pageable pageable) {
+    public ResponseEntity<Page<UserResponseBody>> findInactiveByNameContaining(@RequestParam String name, Pageable pageable) {
         var users = userService.findInactiveByNameContaining(name, pageable);
         return new ResponseEntity<>(users, OK);
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @GetMapping("active/{id}")
-    public ResponseEntity<UserResponse> findActiveById(@PathVariable Integer id) {
+    public ResponseEntity<UserResponseBody> findActiveById(@PathVariable Integer id) {
         var user = userService.findActiveById(id);
         return new ResponseEntity<>(user, OK);
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @GetMapping("inactive/{id}")
-    public ResponseEntity<UserResponse> findInactiveById(@PathVariable Integer id) {
+    public ResponseEntity<UserResponseBody> findInactiveById(@PathVariable Integer id) {
         var user = userService.findInactiveById(id);
         return new ResponseEntity<>(user, OK);
     }
 
     @PutMapping
-    public ResponseEntity<UserResponse> update(Authentication onlineUser, @RequestBody @Valid UserRequest requestDTO) {
+    public ResponseEntity<UserResponseBody> update(Authentication onlineUser, @RequestBody @Valid UserRequestBody requestDTO) {
         var user = userService.update(onlineUser.getName(), requestDTO);
         return new ResponseEntity<>(user, OK);
     }

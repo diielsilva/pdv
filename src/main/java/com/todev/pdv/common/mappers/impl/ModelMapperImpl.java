@@ -21,7 +21,7 @@ import java.util.List;
 public class ModelMapperImpl implements ModelMapper {
 
     @Override
-    public User toModel(UserRequest body) {
+    public User toModel(UserRequestBody body) {
         return new UserBuilder()
                 .builder()
                 .name(body.name())
@@ -33,8 +33,8 @@ public class ModelMapperImpl implements ModelMapper {
     }
 
     @Override
-    public UserResponse toDTO(User user) {
-        return new UserResponse(
+    public UserResponseBody toDTO(User user) {
+        return new UserResponseBody(
                 user.getId(),
                 user.getName(),
                 user.getRole(),

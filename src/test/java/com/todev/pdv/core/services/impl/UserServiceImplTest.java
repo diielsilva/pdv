@@ -1,6 +1,6 @@
 package com.todev.pdv.core.services.impl;
 
-import com.todev.pdv.common.dtos.UserRequest;
+import com.todev.pdv.common.dtos.UserRequestBody;
 import com.todev.pdv.common.mappers.contracts.ModelMapper;
 import com.todev.pdv.core.exceptions.ConstraintConflictException;
 import com.todev.pdv.core.exceptions.DependencyInUseException;
@@ -72,7 +72,7 @@ class UserServiceImplTest {
         when(BCryptEncoder.encode(anyString()))
                 .thenReturn("12345");
 
-        when(modelMapper.toModel(any(UserRequest.class)))
+        when(modelMapper.toModel(any(UserRequestBody.class)))
                 .thenReturn(UserFactory.getSeller());
 
         when(modelMapper.toDTO(any(User.class)))
@@ -87,10 +87,10 @@ class UserServiceImplTest {
 
     @Test
     void save_UserShouldNotBeSaved_WhenUserIsAnAdmin() {
-        when(modelMapper.toModel(any(UserRequest.class)))
+        when(modelMapper.toModel(any(UserRequestBody.class)))
                 .thenReturn(UserFactory.getAdmin());
 
-        var user = new UserRequest("Admin", "admin", "12345", "ADMIN");
+        var user = new UserRequestBody("Admin", "admin", "12345", "ADMIN");
 
         assertThrows(PermissionDeniedException.class, () -> userService.save(user));
     }
@@ -100,7 +100,7 @@ class UserServiceImplTest {
         when(userProvider.findByLogin(anyString()))
                 .thenReturn(Optional.of(UserFactory.getSavedManager()));
 
-        var user = new UserRequest("Manager", "manager", "12345", "MANAGER");
+        var user = new UserRequestBody("Manager", "manager", "12345", "MANAGER");
 
         assertThrows(ConstraintConflictException.class, () -> userService.save(user));
     }
@@ -163,7 +163,7 @@ class UserServiceImplTest {
     void update_UserShouldNotBeUpdated_WhenLoginIsInUseByAnotherUser() {
         when(userProvider.findByLogin(anyString()))
                 .thenReturn(Optional.of(UserFactory.getSavedManager()));
-        when(modelMapper.toModel(any(UserRequest.class)))
+        when(modelMapper.toModel(any(UserRequestBody.class)))
                 .thenReturn(UserFactory.getManager());
         var user = UserFactory.getManagerWithoutIssues();
         assertThrows(ConstraintConflictException.class, () -> userService.update("seller", user));

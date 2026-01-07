@@ -1,26 +1,26 @@
 package com.todev.pdv.core.services.contracts;
 
-import com.todev.pdv.common.dtos.UserRequest;
-import com.todev.pdv.common.dtos.UserResponse;
+import com.todev.pdv.common.dtos.UserRequestBody;
+import com.todev.pdv.common.dtos.UserResponseBody;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface UserService {
-    UserResponse save(UserRequest requestDTO);
+    UserResponseBody save(UserRequestBody requestDTO);
 
-    Page<UserResponse> findActive(Pageable pageable);
+    Page<UserResponseBody> findActive(Pageable pageable);
 
-    Page<UserResponse> findInactive(Pageable pageable);
+    Page<UserResponseBody> findInactive(Pageable pageable);
 
-    Page<UserResponse> findActiveByNameContaining(String name, Pageable pageable);
+    Page<UserResponseBody> findActiveByNameContaining(String name, Pageable pageable);
 
-    Page<UserResponse> findInactiveByNameContaining(String name, Pageable pageable);
+    Page<UserResponseBody> findInactiveByNameContaining(String name, Pageable pageable);
 
-    UserResponse findActiveById(Integer id);
+    UserResponseBody findActiveById(Integer id);
 
-    UserResponse findInactiveById(Integer id);
+    UserResponseBody findInactiveById(Integer id);
 
-    UserResponse update(String onlineLogin, UserRequest requestDTO);
+    UserResponseBody update(String onlineLogin, UserRequestBody requestDTO);
 
     void delete(String onlineLogin, Integer id);
 

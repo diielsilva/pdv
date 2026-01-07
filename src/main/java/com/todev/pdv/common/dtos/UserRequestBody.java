@@ -3,7 +3,7 @@ package com.todev.pdv.common.dtos;
 import com.todev.pdv.common.constraints.contracts.Role;
 import jakarta.validation.constraints.NotBlank;
 
-public record UserRequest(
+public record UserRequestBody(
         @NotBlank(message = "O nome não pode ser nulo!")
         String name,
         @NotBlank(message = "O login não pode ser nulo!")

@@ -9,9 +9,9 @@ import com.todev.pdv.core.models.User;
 import java.util.List;
 
 public interface ModelMapper {
-    User toModel(UserRequest userRequest);
+    User toModel(UserRequestBody userRequest);
 
-    UserResponse toDTO(User user);
+    UserResponseBody toDTO(User user);
 
     Product toModel(ProductRequest productRequest);
 

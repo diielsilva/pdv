@@ -1,7 +1,7 @@
 package com.todev.pdv.factories;
 
-import com.todev.pdv.common.dtos.UserRequest;
-import com.todev.pdv.common.dtos.UserResponse;
+import com.todev.pdv.common.dtos.UserRequestBody;
+import com.todev.pdv.common.dtos.UserResponseBody;
 import com.todev.pdv.core.builders.UserBuilder;
 import com.todev.pdv.core.enums.Role;
 import com.todev.pdv.core.models.User;
@@ -144,16 +144,16 @@ public final class UserFactory {
                 .build();
     }
 
-    public static UserRequest getManagerWithoutIssues() {
-        return new UserRequest("Manager", "manager", "12345", "MANAGER");
+    public static UserRequestBody getManagerWithoutIssues() {
+        return new UserRequestBody("Manager", "manager", "12345", "MANAGER");
     }
 
-    public static UserRequest getRequestDTO() {
-        return new UserRequest("Seller", "seller", "12345", "SELLER");
+    public static UserRequestBody getRequestDTO() {
+        return new UserRequestBody("Seller", "seller", "12345", "SELLER");
     }
 
-    public static UserResponse getResponseDTO() {
-        return new UserResponse(
+    public static UserResponseBody getResponseDTO() {
+        return new UserResponseBody(
                 1,
                 "Seller",
                 Role.SELLER,

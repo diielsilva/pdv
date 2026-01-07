@@ -1,8 +1,8 @@
 package com.todev.pdv.web.controllers;
 
 import com.todev.pdv.common.dtos.ErrorResponse;
-import com.todev.pdv.common.dtos.UserRequest;
-import com.todev.pdv.common.dtos.UserResponse;
+import com.todev.pdv.common.dtos.UserRequestBody;
+import com.todev.pdv.common.dtos.UserResponseBody;
 import com.todev.pdv.core.models.User;
 import com.todev.pdv.core.repositories.UserRepository;
 import com.todev.pdv.factories.CredentialsFactory;
@@ -55,7 +55,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
-                UserResponse.class
+                UserResponseBody.class
         );
 
         assertAll(() -> {
@@ -76,7 +76,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
-                UserResponse.class
+                UserResponseBody.class
         );
 
         assertAll(() -> {
@@ -93,7 +93,7 @@ class UserControllerTest {
     @Test
     void save_UserShouldNotBeSaved_WhenAdminUserWasReceived() {
         var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
-        var requestBody = new UserRequest("Admin", "admin", "12345", "ADMIN");
+        var requestBody = new UserRequestBody("Admin", "admin", "12345", "ADMIN");
         var httpResponse = apiClient.exchange("/users",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
@@ -129,7 +129,7 @@ class UserControllerTest {
     @Test
     void save_UserShouldNotBeSaved_WhenReceivedUserHasAnInvalidRole() {
         var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
-        var requestBody = new UserRequest("Seller", "seller", "12345", "SELLERS");
+        var requestBody = new UserRequestBody("Seller", "seller", "12345", "SELLERS");
         var httpResponse = apiClient.exchange("/users",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
@@ -147,7 +147,7 @@ class UserControllerTest {
     @Test
     void save_UserShouldNotBeSaved_WhenAnEmptyUserWasReceived() {
         var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
-        var requestBody = new UserRequest(null, null, null, null);
+        var requestBody = new UserRequestBody(null, null, null, null);
         var httpResponse = apiClient.exchange("/users",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
@@ -182,7 +182,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/active",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<PageableResponse<UserResponse>>() {
+                new ParameterizedTypeReference<PageableResponse<UserResponseBody>>() {
                 });
 
         assertAll(() -> {
@@ -200,7 +200,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/active",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<PageableResponse<UserResponse>>() {
+                new ParameterizedTypeReference<PageableResponse<UserResponseBody>>() {
                 });
 
         assertAll(() -> {
@@ -233,7 +233,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/inactive",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<PageableResponse<UserResponse>>() {
+                new ParameterizedTypeReference<PageableResponse<UserResponseBody>>() {
                 }
         );
 
@@ -251,7 +251,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/inactive",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<PageableResponse<UserResponse>>() {
+                new ParameterizedTypeReference<PageableResponse<UserResponseBody>>() {
                 });
 
         assertAll(() -> {
@@ -281,7 +281,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/active/search?name={name}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<PageableResponse<UserResponse>>() {
+                new ParameterizedTypeReference<PageableResponse<UserResponseBody>>() {
                 }, "Man");
 
         assertAll(() -> {
@@ -298,7 +298,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/active/search?name={name}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<PageableResponse<UserResponse>>() {
+                new ParameterizedTypeReference<PageableResponse<UserResponseBody>>() {
                 }, "Employee");
 
         assertAll(() -> {
@@ -329,7 +329,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/inactive/search?name={name}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<PageableResponse<UserResponse>>() {
+                new ParameterizedTypeReference<PageableResponse<UserResponseBody>>() {
                 }, "ll");
 
         assertAll(() -> {
@@ -346,7 +346,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/inactive/search?name={name}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<PageableResponse<UserResponse>>() {
+                new ParameterizedTypeReference<PageableResponse<UserResponseBody>>() {
                 }, "man");
 
         assertAll(() -> {
@@ -378,7 +378,7 @@ class UserControllerTest {
                 "/users/active/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                UserResponse.class,
+                UserResponseBody.class,
                 user.getId()
         );
 
@@ -430,7 +430,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/inactive/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                UserResponse.class,
+                UserResponseBody.class,
                 user.getId()
         );
 
@@ -480,7 +480,7 @@ class UserControllerTest {
                 "/users",
                 PUT,
                 new HttpEntity<>(requestBody, httpHeaders),
-                UserResponse.class
+                UserResponseBody.class
         );
 
         assertAll(() -> {
@@ -500,7 +500,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users",
                 PUT,
                 new HttpEntity<>(requestBody, httpHeaders),
-                UserResponse.class
+                UserResponseBody.class
         );
 
         assertAll(() -> {
@@ -516,7 +516,7 @@ class UserControllerTest {
         securityHelper.createUser(UserFactory.getSeller());
 
         var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
-        var requestBody = new UserRequest("Manager", "manager", "12345", "MANAGER");
+        var requestBody = new UserRequestBody("Manager", "manager", "12345", "MANAGER");
         var httpResponse = apiClient.exchange("/users",
                 PUT,
                 new HttpEntity<>(requestBody, httpHeaders),
