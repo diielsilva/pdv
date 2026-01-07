@@ -1,7 +1,7 @@
 package com.todev.pdv.factories;
 
-import com.todev.pdv.common.dtos.SaleRequest;
-import com.todev.pdv.common.dtos.SaleResponse;
+import com.todev.pdv.common.dtos.SaleRequestBody;
+import com.todev.pdv.common.dtos.SaleResponseBody;
 import com.todev.pdv.core.builders.SaleBuilder;
 import com.todev.pdv.core.enums.PaymentMethod;
 import com.todev.pdv.core.models.Sale;
@@ -68,32 +68,32 @@ public final class SaleFactory {
                 .build();
     }
 
-    public static SaleRequest getRequestDTO(Integer productId) {
-        return new SaleRequest(
+    public static SaleRequestBody getRequestDTO(Integer productId) {
+        return new SaleRequestBody(
                 "CARD",
                 0,
                 List.of(SaleItemFactory.getSaleItemWithoutIssues(productId))
         );
     }
 
-    public static SaleRequest getSaleWithDuplicatedItems(Integer productId) {
-        return new SaleRequest(
+    public static SaleRequestBody getSaleWithDuplicatedItems(Integer productId) {
+        return new SaleRequestBody(
                 "CARD",
                 0,
                 List.of(SaleItemFactory.getSaleItemWithoutIssues(productId), SaleItemFactory.getSaleItemWithoutIssues(productId))
         );
     }
 
-    public static SaleRequest getSaleWithNotEnoughStockItems(Integer productId) {
-        return new SaleRequest(
+    public static SaleRequestBody getSaleWithNotEnoughStockItems(Integer productId) {
+        return new SaleRequestBody(
                 "CARD",
                 0,
                 List.of(SaleItemFactory.getSaleItemWithNoEnoughStockProduct(productId))
         );
     }
 
-    public static SaleResponse getResponseDTO() {
-        return new SaleResponse(
+    public static SaleResponseBody getResponseDTO() {
+        return new SaleResponseBody(
                 1,
                 PaymentMethod.CARD,
                 0,

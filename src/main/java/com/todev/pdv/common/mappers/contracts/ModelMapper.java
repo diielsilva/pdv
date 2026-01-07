@@ -13,18 +13,18 @@ public interface ModelMapper {
 
     UserResponseBody toResponseBody(User user);
 
-    Product toModel(ProductRequest requestBody);
+    Product toModel(ProductRequestBody requestBody);
 
-    ProductResponse toResponseBody(Product product);
+    ProductResponseBody toResponseBody(Product product);
 
-    Sale toModel(SaleRequest requestBody);
+    Sale toModel(SaleRequestBody requestBody);
 
-    SaleResponse toResponseBody(Sale sale);
+    SaleResponseBody toResponseBody(Sale sale);
 
-    SaleDetailsResponse toResponseBody(User user, List<SaleItem> items, List<Product> products);
+    SaleDetailsResponseBody toResponseBody(User user, List<SaleItem> items, List<Product> products);
 
-    SaleItem toModel(SaleItemRequest requestBody);
+    SaleItem toModel(SaleItemRequestBody requestBody);
 
-    SaleItemResponse toResponseBody(SaleItem item, Product product);
+    SaleItemResponseBody toResponseBody(SaleItem item, Product product);
 
 }

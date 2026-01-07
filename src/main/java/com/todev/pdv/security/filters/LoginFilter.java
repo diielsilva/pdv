@@ -1,7 +1,7 @@
 package com.todev.pdv.security.filters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.todev.pdv.common.dtos.ErrorResponse;
+import com.todev.pdv.common.dtos.ErrorResponseBody;
 import com.todev.pdv.core.models.User;
 import com.todev.pdv.security.dtos.LoginRequest;
 import com.todev.pdv.security.dtos.LoginResponse;
@@ -60,7 +60,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     protected void unsuccessfulAuthentication(HttpServletRequest request,
                                               HttpServletResponse response,
                                               AuthenticationException failed) {
-        var errorResponse = new ErrorResponse(
+        var errorResponse = new ErrorResponseBody(
                 LocalDateTime.now(),
                 401,
                 "Login ou senha inválido(a)!",

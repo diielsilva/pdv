@@ -1,6 +1,6 @@
 package com.todev.pdv.web.controllers;
 
-import com.todev.pdv.common.dtos.ErrorResponse;
+import com.todev.pdv.common.dtos.ErrorResponseBody;
 import com.todev.pdv.common.dtos.UserRequestBody;
 import com.todev.pdv.common.dtos.UserResponseBody;
 import com.todev.pdv.core.models.User;
@@ -97,7 +97,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertAll(() -> {
@@ -116,7 +116,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertAll(() -> {
@@ -133,7 +133,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertAll(() -> {
@@ -151,7 +151,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertAll(() -> {
@@ -170,7 +170,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
@@ -219,7 +219,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/active",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
@@ -269,7 +269,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/inactive",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
@@ -316,7 +316,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/active/search?name={name}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class, "Man");
+                ErrorResponseBody.class, "Man");
 
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
@@ -364,7 +364,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/inactive/search?name={name}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class, "ll");
+                ErrorResponseBody.class, "ll");
 
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
@@ -396,7 +396,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/active/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 0
         );
 
@@ -415,7 +415,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/active/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 1
         );
 
@@ -448,7 +448,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/inactive/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 0
         );
 
@@ -467,7 +467,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/inactive/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class, 1);
+                ErrorResponseBody.class, 1);
 
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }
@@ -520,7 +520,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users",
                 PUT,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertAll(() -> {
@@ -570,7 +570,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/{id}",
                 DELETE,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 user.getId()
         );
 
@@ -592,7 +592,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/{id}",
                 DELETE,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 user.getId()
         );
 
@@ -609,7 +609,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/{id}",
                 DELETE,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 0
         );
 
@@ -628,7 +628,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/{id}",
                 DELETE,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 1
         );
 
@@ -656,7 +656,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/{id}",
                 PATCH,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 0
         );
 
@@ -675,7 +675,7 @@ class UserControllerTest {
         var httpResponse = apiClient.exchange("/users/{id}",
                 PATCH,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class, 1);
+                ErrorResponseBody.class, 1);
 
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
     }

@@ -1,6 +1,6 @@
 package com.todev.pdv.core.services.impl;
 
-import com.todev.pdv.common.dtos.ProductRequest;
+import com.todev.pdv.common.dtos.ProductRequestBody;
 import com.todev.pdv.common.mappers.contracts.ModelMapper;
 import com.todev.pdv.core.exceptions.ConstraintConflictException;
 import com.todev.pdv.core.models.Product;
@@ -63,7 +63,7 @@ class ProductServiceImplTest {
 
     @BeforeEach
     void setUpModelMapper() {
-        when(modelMapper.toModel(any(ProductRequest.class)))
+        when(modelMapper.toModel(any(ProductRequestBody.class)))
                 .thenReturn(ProductFactory.getProduct());
 
         when(modelMapper.toResponseBody(any(Product.class)))
@@ -127,7 +127,7 @@ class ProductServiceImplTest {
     void update_ProductShouldNotBeUpdated_WhenDescriptionIsInUseByAnotherProduct() {
         when(productProvider.findByDescription(anyString()))
                 .thenReturn(Optional.of(ProductFactory.getSavedProduct()));
-        when(modelMapper.toModel(any(ProductRequest.class)))
+        when(modelMapper.toModel(any(ProductRequestBody.class)))
                 .thenReturn(new Product(null, "iPhone XR", 10, 1800.00, null, null));
         var product = ProductFactory.getRequestDTO();
         assertThrows(ConstraintConflictException.class, () -> productService.update(1, product));

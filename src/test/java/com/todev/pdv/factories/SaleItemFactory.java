@@ -1,6 +1,6 @@
 package com.todev.pdv.factories;
 
-import com.todev.pdv.common.dtos.SaleItemRequest;
+import com.todev.pdv.common.dtos.SaleItemRequestBody;
 import com.todev.pdv.core.builders.SaleItemBuilder;
 import com.todev.pdv.core.models.SaleItem;
 
@@ -51,22 +51,22 @@ public final class SaleItemFactory {
                 .build();
     }
 
-    public static SaleItemRequest getSaleItemWithoutIssues(Integer productId) {
-        return new SaleItemRequest(
+    public static SaleItemRequestBody getSaleItemWithoutIssues(Integer productId) {
+        return new SaleItemRequestBody(
                 productId,
                 2
         );
     }
 
-    public static SaleItemRequest getSaleItemWithNoEnoughStockProduct(Integer productId) {
-        return new SaleItemRequest(
+    public static SaleItemRequestBody getSaleItemWithNoEnoughStockProduct(Integer productId) {
+        return new SaleItemRequestBody(
                 productId,
                 100
         );
     }
 
-    public static SaleItemRequest getSaleItemWithAmountEqualsToZero(Integer productId) {
-        return new SaleItemRequest(
+    public static SaleItemRequestBody getSaleItemWithAmountEqualsToZero(Integer productId) {
+        return new SaleItemRequestBody(
                 productId,
                 0
         );

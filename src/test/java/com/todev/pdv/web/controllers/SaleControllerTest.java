@@ -84,7 +84,7 @@ class SaleControllerTest {
         var httpResponse = apiClient.exchange("/sales",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
-                SaleResponse.class
+                SaleResponseBody.class
         );
 
         var productById = productRepository.findByIdAndDeletedAtIsNull(product.getId());
@@ -101,12 +101,12 @@ class SaleControllerTest {
     @Test
     void save_OnlineSaleWithoutDeliveryShouldBeSaved() {
         HttpHeaders requestHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
-        SaleRequest requestBody = SaleFactory.getRequestDTO(product.getId());
+        SaleRequestBody requestBody = SaleFactory.getRequestDTO(product.getId());
         var httpResponse = apiClient.exchange(
                 "/sales/online?hasDelivery={hasDelivery}",
                 POST,
                 new HttpEntity<>(requestBody, requestHeaders),
-                SaleResponse.class,
+                SaleResponseBody.class,
                 false
         );
 
@@ -126,12 +126,12 @@ class SaleControllerTest {
     @Test
     void save_OnlineSaleWithDeliveryShouldBeSaved() {
         HttpHeaders requestHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
-        SaleRequest requestBody = SaleFactory.getRequestDTO(product.getId());
+        SaleRequestBody requestBody = SaleFactory.getRequestDTO(product.getId());
         var httpResponse = apiClient.exchange(
                 "/sales/online?hasDelivery={hasDelivery}",
                 POST,
                 new HttpEntity<>(requestBody, requestHeaders),
-                SaleResponse.class,
+                SaleResponseBody.class,
                 true
         );
 
@@ -151,14 +151,14 @@ class SaleControllerTest {
     @Test
     void save_SaleShouldNotBeSaved_WhenReceivedSaleHasDuplicatedProducts() {
         var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
-        var requestBody = new SaleRequest("CARD", 0,
-                List.of(new SaleItemRequest(product.getId(), 1),
-                        new SaleItemRequest(product.getId(), 1)
+        var requestBody = new SaleRequestBody("CARD", 0,
+                List.of(new SaleItemRequestBody(product.getId(), 1),
+                        new SaleItemRequestBody(product.getId(), 1)
                 ));
         var httpResponse = apiClient.exchange("/sales",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertAll(() -> {
@@ -171,13 +171,13 @@ class SaleControllerTest {
     @Test
     void save_SaleShouldNotBeSaved_WhenReceivedSaleHasProductsWithNotEnoughStock() {
         var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
-        var requestBody = new SaleRequest("CARD", 0,
-                List.of(new SaleItemRequest(product.getId(), 100)
+        var requestBody = new SaleRequestBody("CARD", 0,
+                List.of(new SaleItemRequestBody(product.getId(), 100)
                 ));
         var httpResponse = apiClient.exchange("/sales",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertAll(() -> {
@@ -190,11 +190,11 @@ class SaleControllerTest {
     @Test
     void save_SaleShouldNotBeSaved_WhenReceivedSaleDoesNotHaveItems() {
         var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
-        var requestBody = new SaleRequest("CARD", 0, List.of());
+        var requestBody = new SaleRequestBody("CARD", 0, List.of());
         var httpResponse = apiClient.exchange("/sales",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertAll(() -> {
@@ -208,13 +208,13 @@ class SaleControllerTest {
     @Test
     void save_SaleShouldNotBeSaved_WhenReceivedSaleHasAnInvalidPaymentMethod() {
         var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
-        var requestBody = new SaleRequest("CARDS", 0,
-                List.of(new SaleItemRequest(product.getId(), 1)
+        var requestBody = new SaleRequestBody("CARDS", 0,
+                List.of(new SaleItemRequestBody(product.getId(), 1)
                 ));
         var httpResponse = apiClient.exchange("/sales",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertAll(() -> {
@@ -228,13 +228,13 @@ class SaleControllerTest {
     @Test
     void save_SaleShouldNotBeSaved_WhenReceivedSaleHasAnInvalidDiscount() {
         var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
-        var requestBody = new SaleRequest("CARD", -1,
-                List.of(new SaleItemRequest(product.getId(), 1)
+        var requestBody = new SaleRequestBody("CARD", -1,
+                List.of(new SaleItemRequestBody(product.getId(), 1)
                 ));
         var httpResponse = apiClient.exchange("/sales",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertAll(() -> {
@@ -249,12 +249,12 @@ class SaleControllerTest {
     @Test
     void save_SaleShouldNotBeSaved_WhenReceivedSaleHasItemsWithAmountEqualsToZero() {
         var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
-        var requestBody = new SaleRequest("CARD", 0,
-                List.of(new SaleItemRequest(product.getId(), 0)));
+        var requestBody = new SaleRequestBody("CARD", 0,
+                List.of(new SaleItemRequestBody(product.getId(), 0)));
         var httpResponse = apiClient.exchange("/sales",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertAll(() -> {
@@ -269,11 +269,11 @@ class SaleControllerTest {
     @Test
     void save_SaleShouldNotBeSaved_WhenReceivedSaleHasEmptyValues() {
         var httpHeaders = securityHelper.authenticate(CredentialsFactory.getSeller());
-        var requestBody = new SaleRequest(null, null, null);
+        var requestBody = new SaleRequestBody(null, null, null);
         var httpResponse = apiClient.exchange("/sales",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertAll(() -> {
@@ -297,7 +297,7 @@ class SaleControllerTest {
                 "/sales/active",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<PageableResponse<SaleResponse>>() {
+                new ParameterizedTypeReference<PageableResponse<SaleResponseBody>>() {
                 }
         );
 
@@ -315,7 +315,7 @@ class SaleControllerTest {
         var httpResponse = apiClient.exchange("/sales/active",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<PageableResponse<SaleResponse>>() {
+                new ParameterizedTypeReference<PageableResponse<SaleResponseBody>>() {
                 }
         );
 
@@ -340,7 +340,7 @@ class SaleControllerTest {
                 "/sales/inactive",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<PageableResponse<SaleResponse>>() {
+                new ParameterizedTypeReference<PageableResponse<SaleResponseBody>>() {
                 }
         );
 
@@ -359,7 +359,7 @@ class SaleControllerTest {
                 "/sales/inactive",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<PageableResponse<SaleResponse>>() {
+                new ParameterizedTypeReference<PageableResponse<SaleResponseBody>>() {
                 }
         );
 
@@ -376,7 +376,7 @@ class SaleControllerTest {
         var httpResponse = apiClient.exchange("/sales/inactive",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
@@ -400,7 +400,7 @@ class SaleControllerTest {
         var httpResponse = apiClient.exchange("/sales/details/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                SaleDetailsResponse.class,
+                SaleDetailsResponseBody.class,
                 sale.getId());
 
         assertAll(() -> {
@@ -420,7 +420,7 @@ class SaleControllerTest {
         var httpResponse = apiClient.exchange("/sales/details/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 0);
 
         assertAll(() -> {
@@ -444,7 +444,7 @@ class SaleControllerTest {
                 "/sales/active/search?date={date}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<List<SaleResponse>>() {
+                new ParameterizedTypeReference<List<SaleResponseBody>>() {
                 },
                 LocalDateTime.now()
         );
@@ -472,7 +472,7 @@ class SaleControllerTest {
                 "/sales/active/search?date={date}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<List<SaleResponse>>() {
+                new ParameterizedTypeReference<List<SaleResponseBody>>() {
                 },
                 selectedDate
         );
@@ -497,7 +497,7 @@ class SaleControllerTest {
         var httpResponse = apiClient.exchange("/sales/inactive/search?date={date}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<List<SaleResponse>>() {
+                new ParameterizedTypeReference<List<SaleResponseBody>>() {
                 },
                 LocalDateTime.now()
         );
@@ -525,7 +525,7 @@ class SaleControllerTest {
                 "/sales/inactive/search?date={date}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<List<SaleResponse>>() {
+                new ParameterizedTypeReference<List<SaleResponseBody>>() {
                 },
                 selectedSale
         );
@@ -543,7 +543,7 @@ class SaleControllerTest {
         var httpResponse = apiClient.exchange("/sales/inactive/search?date={date}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 LocalDateTime.now()
         );
 
@@ -586,7 +586,7 @@ class SaleControllerTest {
         var httpResponse = apiClient.exchange("/sales/{id}",
                 DELETE,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 0
         );
 
@@ -603,7 +603,7 @@ class SaleControllerTest {
         var httpResponse = apiClient.exchange("/sales/{id}",
                 DELETE,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 0
         );
 
@@ -660,7 +660,7 @@ class SaleControllerTest {
         var httpResponse = apiClient.exchange("/sales/{id}",
                 PATCH,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 sale.getId()
         );
 
@@ -677,7 +677,7 @@ class SaleControllerTest {
         var httpResponse = apiClient.exchange("/sales/{id}",
                 PATCH,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 0
         );
 
@@ -694,7 +694,7 @@ class SaleControllerTest {
         var httpResponse = apiClient.exchange("/sales/{id}",
                 PATCH,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 0
         );
 

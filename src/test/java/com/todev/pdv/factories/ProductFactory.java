@@ -1,7 +1,7 @@
 package com.todev.pdv.factories;
 
-import com.todev.pdv.common.dtos.ProductRequest;
-import com.todev.pdv.common.dtos.ProductResponse;
+import com.todev.pdv.common.dtos.ProductRequestBody;
+import com.todev.pdv.common.dtos.ProductResponseBody;
 import com.todev.pdv.core.builders.ProductBuilder;
 import com.todev.pdv.core.models.Product;
 
@@ -60,11 +60,11 @@ public final class ProductFactory {
                 .build();
     }
 
-    public static ProductRequest getRequestDTO() {
-        return new ProductRequest(DESCRIPTION, AMOUNT, PRICE);
+    public static ProductRequestBody getRequestDTO() {
+        return new ProductRequestBody(DESCRIPTION, AMOUNT, PRICE);
     }
 
-    public static ProductResponse getResponseDTO() {
-        return new ProductResponse(1, DESCRIPTION, AMOUNT, PRICE, DATE, null);
+    public static ProductResponseBody getResponseDTO() {
+        return new ProductResponseBody(1, DESCRIPTION, AMOUNT, PRICE, DATE, null);
     }
 }

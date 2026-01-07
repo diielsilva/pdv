@@ -21,13 +21,13 @@ import java.util.List;
 public class ModelMapperImpl implements ModelMapper {
 
     @Override
-    public User toModel(UserRequestBody body) {
+    public User toModel(UserRequestBody requestBody) {
         return new UserBuilder()
                 .builder()
-                .name(body.name())
-                .login(body.login())
-                .password(body.password())
-                .role(Role.valueOf(body.role()))
+                .name(requestBody.name())
+                .login(requestBody.login())
+                .password(requestBody.password())
+                .role(Role.valueOf(requestBody.role()))
                 .build();
 
     }
@@ -44,7 +44,7 @@ public class ModelMapperImpl implements ModelMapper {
     }
 
     @Override
-    public Product toModel(ProductRequest requestBody) {
+    public Product toModel(ProductRequestBody requestBody) {
         return new ProductBuilder()
                 .builder()
                 .description(requestBody.description())
@@ -54,8 +54,8 @@ public class ModelMapperImpl implements ModelMapper {
     }
 
     @Override
-    public ProductResponse toResponseBody(Product product) {
-        return new ProductResponse(
+    public ProductResponseBody toResponseBody(Product product) {
+        return new ProductResponseBody(
                 product.getId(),
                 product.getDescription(),
                 product.getAmount(),
@@ -66,7 +66,7 @@ public class ModelMapperImpl implements ModelMapper {
     }
 
     @Override
-    public Sale toModel(SaleRequest body) {
+    public Sale toModel(SaleRequestBody body) {
         return new SaleBuilder()
                 .builder()
                 .paymentMethod(PaymentMethod.valueOf(body.paymentMethod()))
@@ -75,8 +75,8 @@ public class ModelMapperImpl implements ModelMapper {
     }
 
     @Override
-    public SaleResponse toResponseBody(Sale sale) {
-        return new SaleResponse(
+    public SaleResponseBody toResponseBody(Sale sale) {
+        return new SaleResponseBody(
                 sale.getId(),
                 sale.getPaymentMethod(),
                 sale.getDiscount(),
@@ -87,21 +87,21 @@ public class ModelMapperImpl implements ModelMapper {
     }
 
     @Override
-    public SaleDetailsResponse toResponseBody(User user, List<SaleItem> items, List<Product> products) {
-        var responseItems = new ArrayList<SaleItemResponse>();
+    public SaleDetailsResponseBody toResponseBody(User user, List<SaleItem> items, List<Product> products) {
+        var responseItems = new ArrayList<SaleItemResponseBody>();
 
         for (int i = 0; i < items.size(); i++) {
             responseItems.add(toResponseBody(items.get(i), products.get(i)));
         }
 
-        return new SaleDetailsResponse(
+        return new SaleDetailsResponseBody(
                 user.getName(),
                 responseItems
         );
     }
 
     @Override
-    public SaleItem toModel(SaleItemRequest body) {
+    public SaleItem toModel(SaleItemRequestBody body) {
         return new SaleItemBuilder()
                 .builder()
                 .productId(body.productId())
@@ -110,8 +110,8 @@ public class ModelMapperImpl implements ModelMapper {
     }
 
     @Override
-    public SaleItemResponse toResponseBody(SaleItem item, Product product) {
-        return new SaleItemResponse(
+    public SaleItemResponseBody toResponseBody(SaleItem item, Product product) {
+        return new SaleItemResponseBody(
                 item.getProductId(),
                 product.getDescription(),
                 item.getAmount(),

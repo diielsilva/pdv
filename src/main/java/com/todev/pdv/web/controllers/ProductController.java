@@ -1,7 +1,7 @@
 package com.todev.pdv.web.controllers;
 
-import com.todev.pdv.common.dtos.ProductRequest;
-import com.todev.pdv.common.dtos.ProductResponse;
+import com.todev.pdv.common.dtos.ProductRequestBody;
+import com.todev.pdv.common.dtos.ProductResponseBody;
 import com.todev.pdv.core.services.contracts.ProductService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -23,55 +23,55 @@ public class ProductController {
 
     @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @PostMapping
-    public ResponseEntity<ProductResponse> save(@RequestBody @Valid ProductRequest requestDTO) {
+    public ResponseEntity<ProductResponseBody> save(@RequestBody @Valid ProductRequestBody requestDTO) {
         var product = productService.save(requestDTO);
         return new ResponseEntity<>(product, CREATED);
     }
 
     @GetMapping("active")
-    public ResponseEntity<Page<ProductResponse>> findActive(Pageable pageable) {
+    public ResponseEntity<Page<ProductResponseBody>> findActive(Pageable pageable) {
         var products = productService.findActive(pageable);
         return new ResponseEntity<>(products, OK);
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @GetMapping("inactive")
-    public ResponseEntity<Page<ProductResponse>> findInactive(Pageable pageable) {
+    public ResponseEntity<Page<ProductResponseBody>> findInactive(Pageable pageable) {
         var products = productService.findInactive(pageable);
         return new ResponseEntity<>(products, OK);
     }
 
     @GetMapping("active/search")
-    public ResponseEntity<Page<ProductResponse>> findActiveByDescriptionContaining(@RequestParam String description,
-                                                                                   Pageable pageable) {
+    public ResponseEntity<Page<ProductResponseBody>> findActiveByDescriptionContaining(@RequestParam String description,
+                                                                                       Pageable pageable) {
         var products = productService.findActiveByDescriptionContaining(description, pageable);
         return new ResponseEntity<>(products, OK);
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @GetMapping("inactive/search")
-    public ResponseEntity<Page<ProductResponse>> findInactiveByDescriptionContaining(@RequestParam String description,
-                                                                                     Pageable pageable) {
+    public ResponseEntity<Page<ProductResponseBody>> findInactiveByDescriptionContaining(@RequestParam String description,
+                                                                                         Pageable pageable) {
         var products = productService.findInactiveByDescriptionContaining(description, pageable);
         return new ResponseEntity<>(products, OK);
     }
 
     @GetMapping("active/{id}")
-    public ResponseEntity<ProductResponse> findActiveById(@PathVariable Integer id) {
+    public ResponseEntity<ProductResponseBody> findActiveById(@PathVariable Integer id) {
         var product = productService.findActiveById(id);
         return new ResponseEntity<>(product, OK);
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @GetMapping("inactive/{id}")
-    public ResponseEntity<ProductResponse> findInactiveById(@PathVariable Integer id) {
+    public ResponseEntity<ProductResponseBody> findInactiveById(@PathVariable Integer id) {
         var product = productService.findInactiveById(id);
         return new ResponseEntity<>(product, OK);
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @PutMapping("{id}")
-    public ResponseEntity<ProductResponse> update(@PathVariable Integer id, @RequestBody @Valid ProductRequest requestDTO) {
+    public ResponseEntity<ProductResponseBody> update(@PathVariable Integer id, @RequestBody @Valid ProductRequestBody requestDTO) {
         var product = productService.update(id, requestDTO);
         return new ResponseEntity<>(product, OK);
     }

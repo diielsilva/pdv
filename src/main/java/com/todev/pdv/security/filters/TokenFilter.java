@@ -1,6 +1,6 @@
 package com.todev.pdv.security.filters;
 
-import com.todev.pdv.common.dtos.ErrorResponse;
+import com.todev.pdv.common.dtos.ErrorResponseBody;
 import com.todev.pdv.core.providers.contracts.UserProvider;
 import com.todev.pdv.security.services.contracts.TokenService;
 import com.todev.pdv.security.utils.contracts.ResponseUtil;
@@ -41,7 +41,7 @@ public class TokenFilter extends BasicAuthenticationFilter {
 
             chain.doFilter(request, response);
         } catch (Exception exception) {
-            var errorResponse = new ErrorResponse(
+            var errorResponse = new ErrorResponseBody(
                     LocalDateTime.now(),
                     403,
                     "O token de acesso está inválido, expirado ou você não pode acessar este recurso!",

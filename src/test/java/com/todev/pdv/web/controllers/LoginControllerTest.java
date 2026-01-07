@@ -1,6 +1,6 @@
 package com.todev.pdv.web.controllers;
 
-import com.todev.pdv.common.dtos.ErrorResponse;
+import com.todev.pdv.common.dtos.ErrorResponseBody;
 import com.todev.pdv.core.repositories.UserRepository;
 import com.todev.pdv.factories.CredentialsFactory;
 import com.todev.pdv.factories.UserFactory;
@@ -11,7 +11,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Configuration;
@@ -60,7 +59,7 @@ class LoginControllerTest {
     @Test
     void login_UserShouldNotBeAuthenticated_WhenIncorrectCredentialsWereReceived() {
         var requestBody = new LoginRequest("admin", "123456");
-        var httpResponse = apiClient.postForEntity("/login", requestBody, ErrorResponse.class);
+        var httpResponse = apiClient.postForEntity("/login", requestBody, ErrorResponseBody.class);
 
         assertEquals(UNAUTHORIZED, httpResponse.getStatusCode());
     }
@@ -71,7 +70,7 @@ class LoginControllerTest {
         securityHelper.createUser(UserFactory.getInactiveAdmin());
 
         var requestBody = CredentialsFactory.getAdmin();
-        var httpResponse = apiClient.postForEntity("/login", requestBody, ErrorResponse.class);
+        var httpResponse = apiClient.postForEntity("/login", requestBody, ErrorResponseBody.class);
 
         assertEquals(UNAUTHORIZED, httpResponse.getStatusCode());
     }

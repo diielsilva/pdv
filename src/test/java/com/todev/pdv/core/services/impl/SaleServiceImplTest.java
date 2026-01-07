@@ -1,7 +1,7 @@
 package com.todev.pdv.core.services.impl;
 
-import com.todev.pdv.common.dtos.SaleItemRequest;
-import com.todev.pdv.common.dtos.SaleRequest;
+import com.todev.pdv.common.dtos.SaleItemRequestBody;
+import com.todev.pdv.common.dtos.SaleRequestBody;
 import com.todev.pdv.common.mappers.contracts.ModelMapper;
 import com.todev.pdv.core.exceptions.DuplicatedItemException;
 import com.todev.pdv.core.exceptions.NotEnoughStockException;
@@ -122,10 +122,10 @@ class SaleServiceImplTest {
 
     @BeforeEach
     void setUpModelMapper() {
-        when(modelMapper.toModel(any(SaleRequest.class)))
+        when(modelMapper.toModel(any(SaleRequestBody.class)))
                 .thenReturn(SaleFactory.getSale());
 
-        when(modelMapper.toModel(any(SaleItemRequest.class)))
+        when(modelMapper.toModel(any(SaleItemRequestBody.class)))
                 .thenReturn(SaleItemFactory.getSaleItem());
 
         when(modelMapper.toResponseBody(any(Sale.class)))
@@ -157,7 +157,7 @@ class SaleServiceImplTest {
     void save_SaleShouldNotBeSaved_WhenReceivedSaleHasItemsWithNotEnoughStock() {
         var item = SaleItemFactory.getSaleItem();
         item.setAmount(100);
-        when(modelMapper.toModel(any(SaleItemRequest.class)))
+        when(modelMapper.toModel(any(SaleItemRequestBody.class)))
                 .thenReturn(item);
         var sale = SaleFactory.getSaleWithNotEnoughStockItems(1);
         assertThrows(NotEnoughStockException.class, () -> saleService.save("seller", sale));

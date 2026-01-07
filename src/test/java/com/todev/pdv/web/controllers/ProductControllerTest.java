@@ -1,8 +1,8 @@
 package com.todev.pdv.web.controllers;
 
-import com.todev.pdv.common.dtos.ErrorResponse;
-import com.todev.pdv.common.dtos.ProductRequest;
-import com.todev.pdv.common.dtos.ProductResponse;
+import com.todev.pdv.common.dtos.ErrorResponseBody;
+import com.todev.pdv.common.dtos.ProductRequestBody;
+import com.todev.pdv.common.dtos.ProductResponseBody;
 import com.todev.pdv.core.models.Product;
 import com.todev.pdv.core.repositories.ProductRepository;
 import com.todev.pdv.core.repositories.UserRepository;
@@ -62,7 +62,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ProductResponse.class
+                ProductResponseBody.class
         );
 
         assertAll(() -> {
@@ -84,7 +84,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertAll(() -> {
@@ -97,11 +97,11 @@ class ProductControllerTest {
     @Test
     void save_ProductShouldNotBeSaved_WhenProductWithAmountEqualsToMinusOneWasReceived() {
         var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
-        var requestBody = new ProductRequest("Samsung Galaxy S20", -1, 1750.9);
+        var requestBody = new ProductRequestBody("Samsung Galaxy S20", -1, 1750.9);
         var httpResponse = apiClient.exchange("/products",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertAll(() -> {
@@ -114,11 +114,11 @@ class ProductControllerTest {
     @Test
     void save_ProductShouldNotBeSaved_WhenProductWithPriceEqualsToMinusOneWasReceived() {
         var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
-        var requestBody = new ProductRequest("Samsung Galaxy S20", 1, -1.0);
+        var requestBody = new ProductRequestBody("Samsung Galaxy S20", 1, -1.0);
         var httpResponse = apiClient.exchange("/products",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertAll(() -> {
@@ -132,11 +132,11 @@ class ProductControllerTest {
     @Test
     void save_ProductShouldNotBeSaved_WhenProductWithoutValuesWasReceived() {
         var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
-        var requestBody = new ProductRequest(null, null, null);
+        var requestBody = new ProductRequestBody(null, null, null);
         var httpResponse = apiClient.exchange("/products",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertAll(() -> {
@@ -153,7 +153,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products",
                 POST,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
@@ -167,7 +167,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/active",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<PageableResponse<ProductResponse>>() {
+                new ParameterizedTypeReference<PageableResponse<ProductResponseBody>>() {
                 }
         );
 
@@ -185,7 +185,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/active",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<PageableResponse<ProductResponse>>() {
+                new ParameterizedTypeReference<PageableResponse<ProductResponseBody>>() {
                 }
         );
 
@@ -204,7 +204,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/inactive",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<PageableResponse<ProductResponse>>() {
+                new ParameterizedTypeReference<PageableResponse<ProductResponseBody>>() {
                 }
         );
 
@@ -222,7 +222,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/inactive",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<PageableResponse<ProductResponse>>() {
+                new ParameterizedTypeReference<PageableResponse<ProductResponseBody>>() {
                 }
         );
 
@@ -239,7 +239,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/inactive",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
         );
 
         assertEquals(FORBIDDEN, httpResponse.getStatusCode());
@@ -253,7 +253,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/active/search?description={description}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<PageableResponse<ProductResponse>>() {
+                new ParameterizedTypeReference<PageableResponse<ProductResponseBody>>() {
                 },
                 "Gal"
         );
@@ -274,7 +274,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/active/search?description={description}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<PageableResponse<ProductResponse>>() {
+                new ParameterizedTypeReference<PageableResponse<ProductResponseBody>>() {
                 },
                 "S21"
         );
@@ -294,7 +294,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/inactive/search?description={description}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<PageableResponse<ProductResponse>>() {
+                new ParameterizedTypeReference<PageableResponse<ProductResponseBody>>() {
                 },
                 "S20"
         );
@@ -315,7 +315,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/inactive/search?description={description}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                new ParameterizedTypeReference<PageableResponse<ProductResponse>>() {
+                new ParameterizedTypeReference<PageableResponse<ProductResponseBody>>() {
                 },
                 "S20"
         );
@@ -333,7 +333,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/inactive/search?description={description}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class
+                ErrorResponseBody.class
                 ,
                 "S20"
         );
@@ -348,7 +348,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/active/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                ProductResponse.class,
+                ProductResponseBody.class,
                 product.getId()
         );
 
@@ -366,7 +366,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/active/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 0
         );
 
@@ -384,7 +384,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/inactive/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                ProductResponse.class,
+                ProductResponseBody.class,
                 product.getId()
         );
 
@@ -402,7 +402,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/inactive/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 0
         );
 
@@ -419,7 +419,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/inactive/{id}",
                 GET,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 0
         );
 
@@ -436,7 +436,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/{id}",
                 PUT,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ProductResponse.class,
+                ProductResponseBody.class,
                 product.getId()
         );
 
@@ -456,7 +456,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/{id}",
                 PUT,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ProductResponse.class,
+                ProductResponseBody.class,
                 product.getId()
         );
 
@@ -477,7 +477,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/{id}",
                 PUT,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 product.getId()
         );
 
@@ -491,11 +491,11 @@ class ProductControllerTest {
     @Test
     void update_ProductShouldNotBeUpdated_WhenReceivedProductHasAmountEqualsToMinus() {
         var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
-        var requestBody = new ProductRequest("iPhone XR", -1, 1750.9);
+        var requestBody = new ProductRequestBody("iPhone XR", -1, 1750.9);
         var httpResponse = apiClient.exchange("/products/{id}",
                 PUT,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 1
         );
 
@@ -510,11 +510,11 @@ class ProductControllerTest {
     @Test
     void update_ProductShouldNotBeUpdated_WhenReceivedProductHasPriceEqualsToMinusOne() {
         var httpHeaders = securityHelper.authenticate(CredentialsFactory.getManager());
-        var requestBody = new ProductRequest("Samsung S20 FE", 10, -1.0);
+        var requestBody = new ProductRequestBody("Samsung S20 FE", 10, -1.0);
         var httpResponse = apiClient.exchange("/products/{id}",
                 PUT,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 1
         );
 
@@ -529,11 +529,11 @@ class ProductControllerTest {
     @Test
     void update_ProductShouldNotBeUpdated_WhenEmptyProductWasReceived() {
         var httpHeaders = securityHelper.authenticate(CredentialsFactory.getAdmin());
-        var requestBody = new ProductRequest(null, null, null);
+        var requestBody = new ProductRequestBody(null, null, null);
         var httpResponse = apiClient.exchange("/products/{id}",
                 PUT,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 1
         );
 
@@ -551,7 +551,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/{id}",
                 PUT,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 0
         );
 
@@ -569,7 +569,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/{id}",
                 PUT,
                 new HttpEntity<>(requestBody, httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 1
         );
 
@@ -596,7 +596,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/{id}",
                 DELETE,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 0
         );
 
@@ -613,7 +613,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/{id}",
                 DELETE,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 1
         );
 
@@ -640,7 +640,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/{id}",
                 PATCH,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 0
         );
 
@@ -657,7 +657,7 @@ class ProductControllerTest {
         var httpResponse = apiClient.exchange("/products/{id}",
                 PATCH,
                 new HttpEntity<>(httpHeaders),
-                ErrorResponse.class,
+                ErrorResponseBody.class,
                 1
         );
 

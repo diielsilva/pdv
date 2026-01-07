@@ -1,8 +1,8 @@
 package com.todev.pdv.core.services.contracts;
 
-import com.todev.pdv.common.dtos.SaleDetailsResponse;
-import com.todev.pdv.common.dtos.SaleRequest;
-import com.todev.pdv.common.dtos.SaleResponse;
+import com.todev.pdv.common.dtos.SaleDetailsResponseBody;
+import com.todev.pdv.common.dtos.SaleRequestBody;
+import com.todev.pdv.common.dtos.SaleResponseBody;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -10,23 +10,23 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface SaleService {
-    SaleResponse save(String onlineUser, SaleRequest requestDTO);
+    SaleResponseBody save(String onlineUser, SaleRequestBody requestDTO);
 
-    SaleResponse saveOnline(String onlineUser, boolean hasDelivery, SaleRequest body);
+    SaleResponseBody saveOnline(String onlineUser, boolean hasDelivery, SaleRequestBody body);
 
-    Page<SaleResponse> findActive(Pageable pageable);
+    Page<SaleResponseBody> findActive(Pageable pageable);
 
-    Page<SaleResponse> findInactive(Pageable pageable);
+    Page<SaleResponseBody> findInactive(Pageable pageable);
 
-    List<SaleResponse> findActiveByDate(LocalDateTime date);
+    List<SaleResponseBody> findActiveByDate(LocalDateTime date);
 
-    List<SaleResponse> findInactiveByDate(LocalDateTime date);
+    List<SaleResponseBody> findInactiveByDate(LocalDateTime date);
 
-    SaleResponse findActiveById(Integer id);
+    SaleResponseBody findActiveById(Integer id);
 
-    SaleResponse findInactiveById(Integer id);
+    SaleResponseBody findInactiveById(Integer id);
 
-    SaleDetailsResponse details(Integer id);
+    SaleDetailsResponseBody details(Integer id);
 
     void delete(Integer id);
 

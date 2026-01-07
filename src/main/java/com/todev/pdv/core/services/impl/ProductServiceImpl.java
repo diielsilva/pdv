@@ -1,7 +1,7 @@
 package com.todev.pdv.core.services.impl;
 
-import com.todev.pdv.common.dtos.ProductRequest;
-import com.todev.pdv.common.dtos.ProductResponse;
+import com.todev.pdv.common.dtos.ProductRequestBody;
+import com.todev.pdv.common.dtos.ProductResponseBody;
 import com.todev.pdv.common.mappers.contracts.ModelMapper;
 import com.todev.pdv.core.exceptions.ConstraintConflictException;
 import com.todev.pdv.core.providers.contracts.ProductProvider;
@@ -27,7 +27,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Transactional
     @Override
-    public ProductResponse save(ProductRequest requestDTO) {
+    public ProductResponseBody save(ProductRequestBody requestDTO) {
         var product = modelMapper.toModel(requestDTO);
 
         if (isDescriptionInUse(product.getDescription())) {
@@ -40,44 +40,44 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductResponse> findActive(Pageable pageable) {
+    public Page<ProductResponseBody> findActive(Pageable pageable) {
         var products = productProvider.findActive(pageable);
         return products.map(modelMapper::toResponseBody);
     }
 
     @Override
-    public Page<ProductResponse> findInactive(Pageable pageable) {
+    public Page<ProductResponseBody> findInactive(Pageable pageable) {
         var products = productProvider.findInactive(pageable);
         return products.map(modelMapper::toResponseBody);
     }
 
     @Override
-    public Page<ProductResponse> findActiveByDescriptionContaining(String description, Pageable pageable) {
+    public Page<ProductResponseBody> findActiveByDescriptionContaining(String description, Pageable pageable) {
         var products = productProvider.findActiveByDescriptionContaining(description, pageable);
         return products.map(modelMapper::toResponseBody);
     }
 
     @Override
-    public Page<ProductResponse> findInactiveByDescriptionContaining(String description, Pageable pageable) {
+    public Page<ProductResponseBody> findInactiveByDescriptionContaining(String description, Pageable pageable) {
         var products = productProvider.findInactiveByDescriptionContaining(description, pageable);
         return products.map(modelMapper::toResponseBody);
     }
 
     @Override
-    public ProductResponse findActiveById(Integer id) {
+    public ProductResponseBody findActiveById(Integer id) {
         var product = productProvider.findActiveById(id);
         return modelMapper.toResponseBody(product);
     }
 
     @Override
-    public ProductResponse findInactiveById(Integer id) {
+    public ProductResponseBody findInactiveById(Integer id) {
         var product = productProvider.findInactiveById(id);
         return modelMapper.toResponseBody(product);
     }
 
     @Transactional
     @Override
-    public ProductResponse update(Integer id, ProductRequest requestDTO) {
+    public ProductResponseBody update(Integer id, ProductRequestBody requestDTO) {
         var savedProduct = productProvider.findActiveById(id);
         var product = modelMapper.toModel(requestDTO);
         var newDescription = product.getDescription();

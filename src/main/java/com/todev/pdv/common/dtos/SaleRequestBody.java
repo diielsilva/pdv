@@ -9,17 +9,15 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
-public record SaleRequest(
+public record SaleRequestBody(
         @PaymentMethod
         String paymentMethod,
-
         @NotNull(message = "O desconto não pode ser nulo")
         @Min(message = "O desconto deve ser maior ou igual a zero!", value = 0)
         @Max(message = "O desconto deve ser menor ou igual a cem!", value = 100)
         Integer discount,
-
         @NotNull(message = "Os itens da venda não podem ser nulos!")
         @NotEmpty(message = "A venda deve conter ao menos um item!")
         @Valid
-        List<SaleItemRequest> items) {
+        List<SaleItemRequestBody> items) {
 }

@@ -1,8 +1,8 @@
 package com.todev.pdv.core.services.impl;
 
-import com.todev.pdv.common.dtos.SaleDetailsResponse;
-import com.todev.pdv.common.dtos.SaleRequest;
-import com.todev.pdv.common.dtos.SaleResponse;
+import com.todev.pdv.common.dtos.SaleDetailsResponseBody;
+import com.todev.pdv.common.dtos.SaleRequestBody;
+import com.todev.pdv.common.dtos.SaleResponseBody;
 import com.todev.pdv.common.mappers.contracts.ModelMapper;
 import com.todev.pdv.core.enums.DeliveryPlatform;
 import com.todev.pdv.core.enums.OnlineSalePlatform;
@@ -52,7 +52,7 @@ public class SaleServiceImpl implements SaleService {
     }
 
     @Override
-    public SaleResponse save(String onlineUser, SaleRequest requestDTO) {
+    public SaleResponseBody save(String onlineUser, SaleRequestBody requestDTO) {
         var sale = modelMapper.toModel(requestDTO);
         var user = userProvider.findActiveByLogin(onlineUser);
         var items = requestDTO.items().stream().map(modelMapper::toModel).toList();
@@ -90,8 +90,8 @@ public class SaleServiceImpl implements SaleService {
     }
 
     @Override
-    public SaleResponse saveOnline(String onlineUser, boolean hasDelivery, SaleRequest body) {
-        SaleResponse response = save(onlineUser, body);
+    public SaleResponseBody saveOnline(String onlineUser, boolean hasDelivery, SaleRequestBody body) {
+        SaleResponseBody response = save(onlineUser, body);
         Sale sale = saleProvider.findActiveById(response.id());
         OnlineSale onlineSale = new OnlineSale(sale.getId(), OnlineSalePlatform.WHATSAPP, sale.getCreatedAt(), sale.getDeletedAt());
         template.insert(onlineSale);
@@ -107,19 +107,19 @@ public class SaleServiceImpl implements SaleService {
     }
 
     @Override
-    public Page<SaleResponse> findActive(Pageable pageable) {
+    public Page<SaleResponseBody> findActive(Pageable pageable) {
         var sales = saleProvider.findActive(pageable);
         return sales.map(modelMapper::toResponseBody);
     }
 
     @Override
-    public Page<SaleResponse> findInactive(Pageable pageable) {
+    public Page<SaleResponseBody> findInactive(Pageable pageable) {
         var sales = saleProvider.findInactive(pageable);
         return sales.map(modelMapper::toResponseBody);
     }
 
     @Override
-    public List<SaleResponse> findActiveByDate(LocalDateTime date) {
+    public List<SaleResponseBody> findActiveByDate(LocalDateTime date) {
         var start = date.withHour(0).withMinute(0).withSecond(0);
         var end = date.withHour(23).withMinute(59).withSecond(59);
         var sales = saleProvider.findActiveByDate(start, end);
@@ -127,7 +127,7 @@ public class SaleServiceImpl implements SaleService {
     }
 
     @Override
-    public List<SaleResponse> findInactiveByDate(LocalDateTime date) {
+    public List<SaleResponseBody> findInactiveByDate(LocalDateTime date) {
         var start = date.withHour(0).withMinute(0).withSecond(0);
         var end = date.withHour(23).withMinute(59).withSecond(59);
         var sales = saleProvider.findInactiveByDate(start, end);
@@ -135,19 +135,19 @@ public class SaleServiceImpl implements SaleService {
     }
 
     @Override
-    public SaleResponse findActiveById(Integer id) {
+    public SaleResponseBody findActiveById(Integer id) {
         var sale = saleProvider.findActiveById(id);
         return modelMapper.toResponseBody(sale);
     }
 
     @Override
-    public SaleResponse findInactiveById(Integer id) {
+    public SaleResponseBody findInactiveById(Integer id) {
         var sale = saleProvider.findInactiveById(id);
         return modelMapper.toResponseBody(sale);
     }
 
     @Override
-    public SaleDetailsResponse details(Integer id) {
+    public SaleDetailsResponseBody details(Integer id) {
         var sale = saleProvider.findById(id);
         var user = userProvider.findById(sale.getUserId());
         var items = saleItemProvider.findBySaleId(sale.getId());

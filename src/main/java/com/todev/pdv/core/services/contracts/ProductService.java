@@ -1,26 +1,26 @@
 package com.todev.pdv.core.services.contracts;
 
-import com.todev.pdv.common.dtos.ProductRequest;
-import com.todev.pdv.common.dtos.ProductResponse;
+import com.todev.pdv.common.dtos.ProductRequestBody;
+import com.todev.pdv.common.dtos.ProductResponseBody;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface ProductService {
-    ProductResponse save(ProductRequest requestDTO);
+    ProductResponseBody save(ProductRequestBody requestDTO);
 
-    Page<ProductResponse> findActive(Pageable pageable);
+    Page<ProductResponseBody> findActive(Pageable pageable);
 
-    Page<ProductResponse> findInactive(Pageable pageable);
+    Page<ProductResponseBody> findInactive(Pageable pageable);
 
-    Page<ProductResponse> findActiveByDescriptionContaining(String description, Pageable pageable);
+    Page<ProductResponseBody> findActiveByDescriptionContaining(String description, Pageable pageable);
 
-    Page<ProductResponse> findInactiveByDescriptionContaining(String description, Pageable pageable);
+    Page<ProductResponseBody> findInactiveByDescriptionContaining(String description, Pageable pageable);
 
-    ProductResponse findActiveById(Integer id);
+    ProductResponseBody findActiveById(Integer id);
 
-    ProductResponse findInactiveById(Integer id);
+    ProductResponseBody findInactiveById(Integer id);
 
-    ProductResponse update(Integer id, ProductRequest requestDTO);
+    ProductResponseBody update(Integer id, ProductRequestBody requestDTO);
 
     void delete(Integer id);
 

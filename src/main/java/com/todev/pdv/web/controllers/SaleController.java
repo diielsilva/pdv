@@ -1,8 +1,8 @@
 package com.todev.pdv.web.controllers;
 
-import com.todev.pdv.common.dtos.SaleDetailsResponse;
-import com.todev.pdv.common.dtos.SaleRequest;
-import com.todev.pdv.common.dtos.SaleResponse;
+import com.todev.pdv.common.dtos.SaleDetailsResponseBody;
+import com.todev.pdv.common.dtos.SaleRequestBody;
+import com.todev.pdv.common.dtos.SaleResponseBody;
 import com.todev.pdv.core.services.contracts.SaleService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -27,49 +27,49 @@ public class SaleController {
     }
 
     @PostMapping
-    public ResponseEntity<SaleResponse> save(Authentication authentication, @RequestBody @Valid SaleRequest requestDTO) {
+    public ResponseEntity<SaleResponseBody> save(Authentication authentication, @RequestBody @Valid SaleRequestBody requestDTO) {
         var sale = saleService.save(authentication.getName(), requestDTO);
         return new ResponseEntity<>(sale, CREATED);
     }
 
     @PostMapping("online")
-    public ResponseEntity<SaleResponse> createOnline(
+    public ResponseEntity<SaleResponseBody> createOnline(
             Authentication authentication,
             @RequestParam boolean hasDelivery,
-            @RequestBody @Valid SaleRequest body
+            @RequestBody @Valid SaleRequestBody body
     ) {
-        SaleResponse sale = saleService.saveOnline(authentication.getName(), hasDelivery, body);
+        SaleResponseBody sale = saleService.saveOnline(authentication.getName(), hasDelivery, body);
         return new ResponseEntity<>(sale, CREATED);
     }
 
     @GetMapping("active")
-    public ResponseEntity<Page<SaleResponse>> findActive(Pageable pageable) {
+    public ResponseEntity<Page<SaleResponseBody>> findActive(Pageable pageable) {
         var sales = saleService.findActive(pageable);
         return new ResponseEntity<>(sales, OK);
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @GetMapping("inactive")
-    public ResponseEntity<Page<SaleResponse>> findInactive(Pageable pageable) {
+    public ResponseEntity<Page<SaleResponseBody>> findInactive(Pageable pageable) {
         var sales = saleService.findInactive(pageable);
         return new ResponseEntity<>(sales, OK);
     }
 
     @GetMapping("details/{id}")
-    public ResponseEntity<SaleDetailsResponse> details(@PathVariable Integer id) {
+    public ResponseEntity<SaleDetailsResponseBody> details(@PathVariable Integer id) {
         var details = saleService.details(id);
         return new ResponseEntity<>(details, OK);
     }
 
     @GetMapping("active/search")
-    public ResponseEntity<List<SaleResponse>> findActiveByDate(@RequestParam LocalDateTime date) {
+    public ResponseEntity<List<SaleResponseBody>> findActiveByDate(@RequestParam LocalDateTime date) {
         var sales = saleService.findActiveByDate(date);
         return new ResponseEntity<>(sales, OK);
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @GetMapping("inactive/search")
-    public ResponseEntity<List<SaleResponse>> findInactiveByDate(@RequestParam LocalDateTime date) {
+    public ResponseEntity<List<SaleResponseBody>> findInactiveByDate(@RequestParam LocalDateTime date) {
         var sales = saleService.findInactiveByDate(date);
         return new ResponseEntity<>(sales, OK);
     }
